@@ -4,6 +4,9 @@
 
 #include "dbg.h"
 
+#include "types.h"
+#include "state.h"
+
 /*
 ** Note that many of the older ISA sound cards on PCs do NOT support
 ** full duplex audio (simultaneous record and playback).
@@ -13,7 +16,6 @@
 #define PA_SAMPLE_TYPE      paFloat32
 #define FRAMES_PER_BUFFER   (64)
 
-typedef float SAMPLE;
 
 static int gNumNoInputs = 0;
 /* This routine will be called by the PortAudio engine when audio is needed.
@@ -28,22 +30,20 @@ static int passthroughCB( const void *inputBuffer, void *outputBuffer,
                           void *userData ) {
     SAMPLE *out = (SAMPLE*)outputBuffer;
     const SAMPLE *in = (const SAMPLE*)inputBuffer;
+    GlacierState *app_state = (GlacierState*)userData;
+
     unsigned int i;
     (void) timeInfo; /* Prevent unused variable warnings. */
     (void) statusFlags;
-    (void) userData;
 
-    if( inputBuffer == NULL ) {
+    if( inputBuffer != NULL ) {
         for( i=0; i<framesPerBuffer; i++ ) {
-            *out++ = 0;  /* left - silent */
-            *out++ = 0;  /* right - silent */
+            app_state->buffer[i] = in[i];
         }
-        gNumNoInputs += 1;
-    } else {
-        for( i=0; i<framesPerBuffer; i++ ) {
-            *out++ = *in++;  /* left - clean */
-            *out++ = *in++;  /* right - clean */
-        }
+    }
+
+    for( i=0; i<framesPerBuffer; i++ ) {
+        *out++ = app_state->buffer[i];
     }
     
     return paContinue;
@@ -74,6 +74,8 @@ int main(void) {
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
 
+    GlacierState *app_state = gs_create(FRAMES_PER_BUFFER, 2);
+
     err = Pa_OpenStream(
               &stream,
               &inputParameters,
@@ -82,7 +84,7 @@ int main(void) {
               FRAMES_PER_BUFFER,
               0, /* paClipOff, */  /* we won't output out of range samples so don't bother clipping them */
               passthroughCB,
-              NULL );
+              app_state );
     check(err == paNoError, "could not open stream");
 
     err = Pa_StartStream( stream );
