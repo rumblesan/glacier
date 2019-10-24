@@ -50,6 +50,22 @@ static int passthroughCB( const void *inputBuffer, void *outputBuffer,
 }
 
 
+int input_loop() {
+    printf("Hit ENTER to stop program.\n");
+    int c;
+    while (1) {
+      c = getchar();
+      switch (c) {
+        case 'q':
+          printf("quitting\n");
+          return 0;
+          break;
+        default:
+          printf("%c\n", c);
+      }
+    }
+}
+
 /*******************************************************************/
 int main(void) {
     PaStreamParameters inputParameters, outputParameters;
@@ -90,8 +106,8 @@ int main(void) {
     err = Pa_StartStream( stream );
     check(err == paNoError, "could not start stream");
 
-    printf("Hit ENTER to stop program.\n");
-    getchar();
+    input_loop();
+
     err = Pa_CloseStream( stream );
     check(err == paNoError, "could not close stream");
 
