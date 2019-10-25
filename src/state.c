@@ -10,11 +10,11 @@
 
 GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels) {
 
-
   GlacierState *gs = malloc(sizeof(GlacierState));
   check_mem(gs);
 
   gs->buffer_count = buffer_count;
+  gs->channels = channels;
 
   gs->controls = malloc(sizeof(BufferControl*) * buffer_count);
   check_mem(gs->controls);
