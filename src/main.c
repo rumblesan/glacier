@@ -23,7 +23,7 @@ static int gNumNoInputs = 0;
 ** that could mess up the system like calling malloc() or free().
 */
 
-static int passthroughCB( const void *inputBuffer, void *outputBuffer,
+static int glacierAudioCB(const void *inputBuffer, void *outputBuffer,
                           unsigned long framesPerBuffer,
                           const PaStreamCallbackTimeInfo* timeInfo,
                           PaStreamCallbackFlags statusFlags,
@@ -118,7 +118,7 @@ int main(void) {
               SAMPLE_RATE,
               FRAMES_PER_BUFFER,
               0, /* paClipOff, */  /* we won't output out of range samples so don't bother clipping them */
-              passthroughCB,
+              glacierAudioCB,
               app_state );
     check(err == paNoError, "could not open stream");
 
