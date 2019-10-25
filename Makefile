@@ -16,7 +16,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LIBS) $(OBJECTS) -o $@
 
 $(OBJDIR)/%.o: %.c
-	$(CC) $(CFLAGS) -I$(HEADERS) $(LDFLAGS) $< -o $@
+	$(CC) $(CFLAGS) -I $(HEADERS) $(LDFLAGS) $< -o $@
 
 clean:
 	rm -rf $(OBJDIR)/src/*.o $(EXECUTABLE)
