@@ -107,7 +107,9 @@ int main(void) {
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
 
-    GlacierState *app_state = gs_create(1, 132300, 2);
+    int buffer_count = 3;
+
+    GlacierState *app_state = gs_create(buffer_count, 132300, 2);
 
     err = Pa_OpenStream(
               &stream,
