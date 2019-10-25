@@ -2,12 +2,18 @@
 #define __GLACIER_STATE__
 
 #include "types.h"
+#include "buffer_control.h"
+#include "audio_buffer.h"
 
 typedef struct GlacierState {
-  SAMPLE *buffer;
+  int buffer_count;
+
+  BufferControl **controls;
+  AudioBuffer **buffers;
+
 } GlacierState;
 
-GlacierState *gs_create(int samples, int channels);
+GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels);
 
 void gs_destroy(GlacierState *gs);
 

@@ -30,27 +30,38 @@ static int passthroughCB( const void *inputBuffer, void *outputBuffer,
                           void *userData ) {
     SAMPLE *out = (SAMPLE*)outputBuffer;
     const SAMPLE *in = (const SAMPLE*)inputBuffer;
-    GlacierState *app_state = (GlacierState*)userData;
+    GlacierState *gs = (GlacierState*)userData;
 
-    unsigned int i;
-    (void) timeInfo; /* Prevent unused variable warnings. */
+    (void) timeInfo;
     (void) statusFlags;
 
-    if( inputBuffer != NULL ) {
-        for( i=0; i<framesPerBuffer; i++ ) {
-            app_state->buffer[i] = in[i];
-        }
+    memcpy(outputBuffer, inputBuffer, framesPerBuffer * sizeof(SAMPLE));
+
+    for (int i = 0; i < gs->buffer_count; i++) {
+      switch (gs->controls[i]->cmd) {
+        case StartRecording:
+          ab_start_recording(gs->buffers[i]);
+          gs->controls[i]->cmd = NoCommand;
+          break;
+        case StopRecording:
+          ab_stop_recording(gs->buffers[i]);
+          gs->controls[i]->cmd = NoCommand;
+          break;
+        default:
+          break;
+      }
+      if (gs->buffers[i]->recording) {
+        ab_record(gs->buffers[i], in, framesPerBuffer);
+      } else {
+        ab_playback_mix(gs->buffers[i], out, framesPerBuffer);
+      }
     }
 
-    for( i=0; i<framesPerBuffer; i++ ) {
-        *out++ = app_state->buffer[i];
-    }
-    
     return paContinue;
 }
 
 
-int input_loop() {
+int input_loop(GlacierState *gs) {
     printf("Hit ENTER to stop program.\n");
     int c;
     while (1) {
@@ -59,6 +70,12 @@ int input_loop() {
         case 'q':
           printf("quitting\n");
           return 0;
+          break;
+        case 'r':
+          bc_start_recording(gs->controls[0]);
+          break;
+        case 's':
+          bc_stop_recording(gs->controls[0]);
           break;
         default:
           printf("%c\n", c);
@@ -90,7 +107,7 @@ int main(void) {
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
 
-    GlacierState *app_state = gs_create(FRAMES_PER_BUFFER, 2);
+    GlacierState *app_state = gs_create(1, 132300, 2);
 
     err = Pa_OpenStream(
               &stream,
@@ -106,7 +123,7 @@ int main(void) {
     err = Pa_StartStream( stream );
     check(err == paNoError, "could not start stream");
 
-    input_loop();
+    input_loop(app_state);
 
     err = Pa_CloseStream( stream );
     check(err == paNoError, "could not close stream");
