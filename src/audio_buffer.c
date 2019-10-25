@@ -29,13 +29,17 @@ error:
 }
 
 void ab_start_recording(AudioBuffer *ab) {
-  ab->recording = 1;
+  if (!ab->recording) {
+    ab->recording = 1;
+  }
 }
 
 void ab_stop_recording(AudioBuffer *ab) {
-  ab->length = ab->record_head_pos;
-  ab->record_head_pos = 0;
-  ab->recording = 0;
+  if (ab->recording) {
+    ab->length = ab->record_head_pos;
+    ab->record_head_pos = 0;
+    ab->recording = 0;
+  }
 }
 
 void ab_record(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long sample_count) {
