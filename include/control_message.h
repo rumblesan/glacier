@@ -1,7 +1,7 @@
 #ifndef __GLACIER_CONTROL_MESSAGE__
 #define __GLACIER_CONTROL_MESSAGE__
 
-enum buffer_command { RecordStart, RecordStop, Pause, Play };
+enum buffer_command { StartRecording, StopRecording, StartPlayback, StopPlayback, PausePlayback };
 
 typedef struct ControlMessage {
   int buffer_number;

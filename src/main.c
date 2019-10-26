@@ -45,10 +45,10 @@ static int glacierAudioCB(const void *inputBuffer, void *outputBuffer,
       new_control_message = rb_pop(gs->control_bus);
       buff_num = new_control_message->buffer_number;
       switch (new_control_message->cmd) {
-        case RecordStart:
+        case StartRecording:
           ab_start_recording(gs->buffers[buff_num]);
           break;
-        case RecordStop:
+        case StopRecording:
           ab_stop_recording(gs->buffers[buff_num]);
           break;
         default:
@@ -88,12 +88,12 @@ int app_loop(GlacierState *gs) {
           break;
         case 'r':
           printf("starting recording in buffer %d\n", buffer_num);
-          cm = cm_create(buffer_num - 1, RecordStart);
+          cm = cm_create(buffer_num - 1, StartRecording);
           rb_push(gs->control_bus, cm);
           break;
         case 's':
           printf("stopping recording in buffer %d\n", buffer_num);
-          cm = cm_create(buffer_num - 1, RecordStop);
+          cm = cm_create(buffer_num - 1, StopRecording);
           rb_push(gs->control_bus, cm);
           break;
         default:
