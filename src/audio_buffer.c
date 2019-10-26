@@ -48,11 +48,11 @@ void ab_record(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long sampl
   }
   unsigned int length;
   if (ab->record_head_pos + sample_count >= ab->max_length) {
-    length = ab->max_length - ab->record_head_pos;
+    length = (ab->max_length - ab->record_head_pos) * ab->channels;
     memcpy(ab->samples + ab->record_head_pos, input_samples, length * sizeof(SAMPLE));
     ab_stop_recording(ab);
   } else {
-    length = sample_count;
+    length = sample_count * ab->channels;
     memcpy(ab->samples + ab->record_head_pos, input_samples, length * sizeof(SAMPLE));
     ab->record_head_pos += sample_count;
   }
@@ -62,21 +62,12 @@ void ab_playback_mix(AudioBuffer *ab, SAMPLE *output_samples, unsigned long samp
   if (ab->length <= 0 || ab->recording) { return; }
 
   unsigned int i;
-  unsigned int start = ab->playback_head_pos;
-  unsigned int stop = start + sample_count;
   unsigned int pos;
-  if (stop > ab->length) {
-    for (i = 0; i < sample_count; i++) {
-      pos = (i + start) % ab->length;
-      output_samples[i] = ab->samples[pos];
-    }
-  } else {
-    for (i = 0; i < sample_count; i++) {
-      pos = i + start;
-      output_samples[i] = ab->samples[pos];
-    }
+  for (i = 0; i < (sample_count * ab->channels); i++) {
+    pos = (i + ab->playback_head_pos) % (ab->length * ab->channels);
+    output_samples[i] = output_samples[i] + ab->samples[pos];
   }
-  ab->playback_head_pos = pos;
+  ab->playback_head_pos = (ab->playback_head_pos + sample_count) % ab->length;
 }
 
 void ab_destroy(AudioBuffer *ab) {
