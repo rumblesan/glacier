@@ -18,7 +18,7 @@ AudioBuffer *ab_create(unsigned int max_length, unsigned int channels) {
   ab->record_head_pos = 0;
   ab->length = 0;
 
-  ab->max_length = max_length;
+  ab->max_length = max_length * channels;
   ab->channels = channels;
 
   ab->recording = 0;
