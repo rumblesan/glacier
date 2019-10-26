@@ -3,9 +3,11 @@
 #include "portaudio.h"
 
 #include "dbg.h"
+#include "ringbuffer.h"
 
 #include "types.h"
 #include "state.h"
+#include "control_message.h"
 
 /*
 ** Note that many of the older ISA sound cards on PCs do NOT support
@@ -37,19 +39,24 @@ static int glacierAudioCB(const void *inputBuffer, void *outputBuffer,
 
     memcpy(out, in, framesPerBuffer * 2 * sizeof(SAMPLE));
 
-    for (int i = 0; i < gs->buffer_count; i++) {
-      switch (gs->controls[i]->cmd) {
-        case StartRecording:
-          ab_start_recording(gs->buffers[i]);
-          gs->controls[i]->cmd = NoCommand;
+    ControlMessage *new_control_message;
+    int buff_num;
+    while (!rb_empty(gs->control_bus)) {
+      new_control_message = rb_pop(gs->control_bus);
+      buff_num = new_control_message->buffer_number;
+      switch (new_control_message->cmd) {
+        case RecordStart:
+          ab_start_recording(gs->buffers[buff_num]);
           break;
-        case StopRecording:
-          ab_stop_recording(gs->buffers[i]);
-          gs->controls[i]->cmd = NoCommand;
+        case RecordStop:
+          ab_stop_recording(gs->buffers[buff_num]);
           break;
         default:
           break;
       }
+    }
+
+    for (int i = 0; i < gs->buffer_count; i++) {
       if (gs->buffers[i]->recording) {
         ab_record(gs->buffers[i], in, framesPerBuffer);
       } else {
@@ -63,10 +70,11 @@ static int glacierAudioCB(const void *inputBuffer, void *outputBuffer,
 }
 
 
-int input_loop(GlacierState *gs) {
+int app_loop(GlacierState *gs) {
     printf("Hit ENTER to stop program.\n");
     int buffer_num;
     char command;
+    ControlMessage *cm;
     while (1) {
       scanf("%d%c", &buffer_num, &command);
       if (buffer_num > gs->buffer_count) {
@@ -80,11 +88,13 @@ int input_loop(GlacierState *gs) {
           break;
         case 'r':
           printf("starting recording in buffer %d\n", buffer_num);
-          bc_start_recording(gs->controls[buffer_num - 1]);
+          cm = cm_create(buffer_num - 1, RecordStart);
+          rb_push(gs->control_bus, cm);
           break;
         case 's':
           printf("stopping recording in buffer %d\n", buffer_num);
-          bc_stop_recording(gs->controls[buffer_num - 1]);
+          cm = cm_create(buffer_num - 1, RecordStop);
+          rb_push(gs->control_bus, cm);
           break;
         default:
           printf("%c unknown command\n", command);
@@ -139,7 +149,7 @@ int main(void) {
     err = Pa_StartStream( stream );
     check(err == paNoError, "could not start stream");
 
-    input_loop(app_state);
+    app_loop(app_state);
 
     err = Pa_CloseStream( stream );
     check(err == paNoError, "could not close stream");

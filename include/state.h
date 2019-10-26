@@ -4,10 +4,15 @@
 #include "types.h"
 #include "buffer_control.h"
 #include "audio_buffer.h"
+#include "ringbuffer.h"
 
 typedef struct GlacierState {
   int buffer_count;
   int channels;
+
+  RingBuffer *control_bus;
+
+  RingBuffer *garbage_bus;
 
   BufferControl **controls;
   AudioBuffer **buffers;

@@ -16,6 +16,14 @@ GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels) {
   gs->buffer_count = buffer_count;
   gs->channels = channels;
 
+  RingBuffer *crb = rb_create(1024);
+  check_mem(crb);
+  gs->control_bus = crb;
+
+  RingBuffer *grb = rb_create(1024);
+  check_mem(grb);
+  gs->garbage_bus = grb;
+
   gs->controls = malloc(sizeof(BufferControl*) * buffer_count);
   check_mem(gs->controls);
   for (int i = 0; i < buffer_count; i++) {
