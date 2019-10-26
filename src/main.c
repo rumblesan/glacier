@@ -3,7 +3,6 @@
 #include "portaudio.h"
 
 #include "dbg.h"
-#include "ringbuffer.h"
 
 #include "types.h"
 #include "state.h"
@@ -41,21 +40,28 @@ static int glacierAudioCB(const void *inputBuffer, void *outputBuffer,
 
     ControlMessage *new_control_message;
     int buff_num;
-    while (!rb_empty(gs->control_bus)) {
-      new_control_message = rb_pop(gs->control_bus);
+    while (ck_ring_dequeue_spsc(
+          gs->control_bus,
+          gs->control_bus_buffer,
+          &new_control_message
+          ) == true) {
       buff_num = new_control_message->buffer_number;
+      printf("received message for buffer %d\n", buff_num);
       switch (new_control_message->cmd) {
         case StartRecording:
+          printf("Starting recording on %d\n", buff_num);
           ab_start_recording(gs->buffers[buff_num]);
+          printf("recording status: %d\n", gs->buffers[buff_num]->recording);
           break;
         case StopRecording:
+          printf("Stopping recording on %d\n", buff_num);
           ab_stop_recording(gs->buffers[buff_num]);
+          printf("recording status: %d\n", gs->buffers[buff_num]->recording);
           break;
         default:
-          break;
+          printf("unknown command: %d %d\n", new_control_message->buffer_number, new_control_message->cmd);
       }
     }
-
     for (int i = 0; i < gs->buffer_count; i++) {
       if (gs->buffers[i]->recording) {
         ab_record(gs->buffers[i], in, framesPerBuffer);
@@ -74,7 +80,6 @@ int app_loop(GlacierState *gs) {
     printf("Hit ENTER to stop program.\n");
     int buffer_num;
     char command;
-    ControlMessage *cm;
     while (1) {
       scanf("%d%c", &buffer_num, &command);
       if (buffer_num > gs->buffer_count) {
@@ -88,13 +93,28 @@ int app_loop(GlacierState *gs) {
           break;
         case 'r':
           printf("starting recording in buffer %d\n", buffer_num);
-          cm = cm_create(buffer_num - 1, StartRecording);
-          rb_push(gs->control_bus, cm);
+          if (
+            ck_ring_enqueue_spsc(
+              gs->control_bus,
+              gs->control_bus_buffer,
+              cm_create(buffer_num - 1, StartRecording)
+            ) == false
+          ) {
+            printf("Could not send message to audio thread\n");
+          }
+          break;
           break;
         case 's':
           printf("stopping recording in buffer %d\n", buffer_num);
-          cm = cm_create(buffer_num - 1, StopRecording);
-          rb_push(gs->control_bus, cm);
+          if (
+            ck_ring_enqueue_spsc(
+              gs->control_bus,
+              gs->control_bus_buffer,
+              cm_create(buffer_num - 1, StopRecording)
+            ) == false
+          ) {
+            printf("Could not send message to audio thread\n");
+          }
           break;
         default:
           printf("%c unknown command\n", command);

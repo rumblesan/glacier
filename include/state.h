@@ -1,17 +1,17 @@
 #ifndef __GLACIER_STATE__
 #define __GLACIER_STATE__
 
+#include "ck_ring.h"
+
 #include "types.h"
 #include "audio_buffer.h"
-#include "ringbuffer.h"
 
 typedef struct GlacierState {
   int buffer_count;
   int channels;
 
-  RingBuffer *control_bus;
-
-  RingBuffer *garbage_bus;
+  void *control_bus_buffer;
+  ck_ring_t *control_bus;
 
   AudioBuffer **buffers;
 

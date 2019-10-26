@@ -6,7 +6,7 @@ OBJECTS    = $(addprefix $(OBJDIR)/, $(SOURCES:.c=.o))
 HEADERS    = include/
 EXECUTABLE = glacier
 
-LIBS       = -lportaudio
+LIBS       = -lportaudio -lck
 
 .PHONE: clean
 

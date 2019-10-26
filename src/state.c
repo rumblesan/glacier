@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #include "dbg.h"
+#include "ck_ring.h"
 
 #include "state.h"
 #include "types.h"
@@ -15,13 +16,16 @@ GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels) {
   gs->buffer_count = buffer_count;
   gs->channels = channels;
 
-  RingBuffer *crb = rb_create(1024);
-  check_mem(crb);
-  gs->control_bus = crb;
+  int control_bus_size = 1024;
+  gs->control_bus = malloc(sizeof(ck_ring_t));
+  check_mem(gs->control_bus);
 
-  RingBuffer *grb = rb_create(1024);
-  check_mem(grb);
-  gs->garbage_bus = grb;
+  gs->control_bus_buffer = malloc(
+    sizeof(ck_ring_buffer_t) * (control_bus_size)
+  );
+  check_mem(gs->control_bus_buffer);
+
+  ck_ring_init(gs->control_bus, control_bus_size);
 
   gs->buffers = malloc(sizeof(AudioBuffer*) * buffer_count);
   check_mem(gs->buffers);
