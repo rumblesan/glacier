@@ -5,7 +5,6 @@
 
 #include "state.h"
 #include "types.h"
-#include "buffer_control.h"
 #include "audio_buffer.h"
 
 GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels) {
@@ -23,13 +22,6 @@ GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels) {
   RingBuffer *grb = rb_create(1024);
   check_mem(grb);
   gs->garbage_bus = grb;
-
-  gs->controls = malloc(sizeof(BufferControl*) * buffer_count);
-  check_mem(gs->controls);
-  for (int i = 0; i < buffer_count; i++) {
-    gs->controls[i] = bc_create();
-    check_mem(gs->controls[i]);
-  }
 
   gs->buffers = malloc(sizeof(AudioBuffer*) * buffer_count);
   check_mem(gs->buffers);

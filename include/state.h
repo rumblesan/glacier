@@ -2,7 +2,6 @@
 #define __GLACIER_STATE__
 
 #include "types.h"
-#include "buffer_control.h"
 #include "audio_buffer.h"
 #include "ringbuffer.h"
 
@@ -14,7 +13,6 @@ typedef struct GlacierState {
 
   RingBuffer *garbage_bus;
 
-  BufferControl **controls;
   AudioBuffer **buffers;
 
 } GlacierState;
