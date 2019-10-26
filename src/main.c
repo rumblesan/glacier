@@ -35,7 +35,7 @@ static int glacierAudioCB(const void *inputBuffer, void *outputBuffer,
     (void) timeInfo;
     (void) statusFlags;
 
-    memcpy(outputBuffer, inputBuffer, framesPerBuffer * sizeof(SAMPLE));
+    memcpy(out, in, framesPerBuffer * 2 * sizeof(SAMPLE));
 
     for (int i = 0; i < gs->buffer_count; i++) {
       switch (gs->controls[i]->cmd) {
@@ -53,7 +53,9 @@ static int glacierAudioCB(const void *inputBuffer, void *outputBuffer,
       if (gs->buffers[i]->recording) {
         ab_record(gs->buffers[i], in, framesPerBuffer);
       } else {
-        ab_playback_mix(gs->buffers[i], out, framesPerBuffer);
+        if (gs->buffers[i]->length > 0) {
+          ab_playback_mix(gs->buffers[i], out, framesPerBuffer);
+        }
       }
     }
 
@@ -63,22 +65,29 @@ static int glacierAudioCB(const void *inputBuffer, void *outputBuffer,
 
 int input_loop(GlacierState *gs) {
     printf("Hit ENTER to stop program.\n");
-    int c;
+    int buffer_num;
+    char command;
     while (1) {
-      c = getchar();
-      switch (c) {
+      scanf("%d%c", &buffer_num, &command);
+      if (buffer_num > gs->buffer_count) {
+        printf("%d is not a valid buffer number\n", buffer_num);
+        continue;
+      }
+      switch (command) {
         case 'q':
           printf("quitting\n");
           return 0;
           break;
         case 'r':
-          bc_start_recording(gs->controls[0]);
+          printf("starting recording in buffer %d\n", buffer_num);
+          bc_start_recording(gs->controls[buffer_num - 1]);
           break;
         case 's':
-          bc_stop_recording(gs->controls[0]);
+          printf("stopping recording in buffer %d\n", buffer_num);
+          bc_stop_recording(gs->controls[buffer_num - 1]);
           break;
         default:
-          printf("%c\n", c);
+          printf("%c unknown command\n", command);
       }
     }
 }
@@ -107,9 +116,14 @@ int main(void) {
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
 
-    int buffer_count = 3;
+    int record_buffer_count = 3;
+    int record_buffer_length = 3;
+    int record_buffer_channels = 2;
 
-    GlacierState *app_state = gs_create(buffer_count, 132300, 2);
+    GlacierState *app_state = gs_create(
+        record_buffer_count,
+        record_buffer_length * SAMPLE_RATE,
+        record_buffer_channels);
 
     err = Pa_OpenStream(
               &stream,
