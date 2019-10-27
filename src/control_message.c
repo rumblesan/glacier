@@ -9,6 +9,7 @@ ControlMessage *cm_create(int buffer_number, enum buffer_command cmd) {
   ControlMessage *cm = malloc(sizeof(ControlMessage));
   check_mem(cm);
   cm->cmd = cmd;
+  cm->buffer_number = buffer_number;
 
   return cm;
 error:
