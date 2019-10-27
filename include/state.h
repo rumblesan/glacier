@@ -10,7 +10,7 @@ typedef struct GlacierState {
   int buffer_count;
   int channels;
 
-  void *control_bus_buffer;
+  ck_ring_buffer_t *control_bus_buffer;
   ck_ring_t *control_bus;
 
   AudioBuffer **buffers;

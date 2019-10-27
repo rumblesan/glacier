@@ -21,7 +21,7 @@ GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels) {
   check_mem(gs->control_bus);
 
   gs->control_bus_buffer = malloc(
-    sizeof(ck_ring_buffer_t) * (control_bus_size)
+    sizeof(ck_ring_buffer_t) * control_bus_size
   );
   check_mem(gs->control_bus_buffer);
 
