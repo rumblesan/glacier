@@ -3,7 +3,7 @@
 #define __BCLIB_MINUNIT_H__
 
 #include <stdio.h>
-#include <bclib/dbg.h>
+#include <dbg.h>
 #include <stdlib.h>
 
 #define mu_suite_start() char *message = NULL
