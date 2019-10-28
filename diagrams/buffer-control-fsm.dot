@@ -1,0 +1,30 @@
+digraph G {
+
+  node [ shape="diamond" ];
+  hasAudio [ label="has recorded audio" ];
+  overdubActive [ label="overdubbing is on" ];
+
+  node [ shape="oval" ];
+  Stopped -> Armed [ label="Record\nAction" ];
+  Stopped -> hasAudio [ label="Play\nAction" ];
+  hasAudio -> Stopped [ label="no" ];
+  hasAudio -> Cued [ label="yes" ];
+
+  Cued -> Playing [ label="On\nPhrase\nSync" ];
+
+  Armed -> Stopped [ label="Play\nAction" ];
+  Armed -> Recording [ label="On\nPhrase\nSync" ];
+
+  Recording -> Stopped [ label="Play\nAction" ];
+  Recording -> Playing [ label="Record\nAction" ];
+
+  Playing -> Stopped [ label="Play\nAction" ];
+  Playing -> overdubActive [ label="Record\nAction" ];
+
+  overdubActive -> Cued [ label="no" ];
+  overdubActive -> Overdubbing [ label="yes" ];
+
+  Overdubbing -> Stopped [ label="Play\nAction" ];
+  Overdubbing -> Playing [ label="Record\nAction" ];
+
+}
