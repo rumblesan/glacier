@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "dbg.h"
 
@@ -21,7 +22,9 @@ AudioBuffer *ab_create(unsigned int max_length, unsigned int channels) {
   ab->max_length = max_length * channels;
   ab->channels = channels;
 
-  ab->recording = 0;
+  ab->recording = false;
+  ab->playing = false;
+  ab->overdub = false;
 
   return ab;
 error:
@@ -29,28 +32,25 @@ error:
 }
 
 void ab_start_recording(AudioBuffer *ab) {
-  if (!ab->recording) {
-    ab->recording = 1;
-  }
+  if (!ab->recording) { ab->recording = true; }
 }
 
 void ab_stop_recording(AudioBuffer *ab) {
   if (ab->recording) {
     ab->length = ab->record_head_pos;
     ab->record_head_pos = 0;
-    ab->recording = 0;
+    ab->recording = false;
   }
 }
 
 void ab_record(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long frame_count) {
-  if (ab->recording != 1) {
-    return;
-  }
+  if (ab->recording) { return; }
+
   int sample_count = frame_count * ab->channels;
-  int stop_recording = 0;
+  bool stop_recording = false;
 
   if (ab->record_head_pos + sample_count >= ab->max_length) {
-    stop_recording = 1;
+    stop_recording = true;
     sample_count = ab->max_length - ab->record_head_pos;
   }
 

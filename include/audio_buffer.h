@@ -1,6 +1,8 @@
 #ifndef __GLACIER_AUDIO_BUFFER__
 #define __GLACIER_AUDIO_BUFFER__
 
+#include <stdbool.h>
+
 #include "types.h"
 
 typedef struct AudioBuffer {
@@ -13,7 +15,12 @@ typedef struct AudioBuffer {
   unsigned int max_length;
   unsigned int channels;
 
-  int recording;
+  bool recording;
+  bool playing;
+
+  bool overdub;
+  bool synced;
+
 } AudioBuffer;
 
 AudioBuffer *ab_create(unsigned int max_length, unsigned int channels);
