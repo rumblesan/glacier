@@ -2,6 +2,7 @@
 
 #include "tests/minunit.h"
 #include "tests/test_control_message.h"
+#include "tests/test_state_machine.h"
 
 int tests_run;
 
@@ -28,6 +29,7 @@ int main(int argc, char *argv[]) {
 
     int result = 0;
     result = result || run_suite(&test_control_message, "Control Message");
+    result = result || run_suite(&test_state_machine, "State Machine");
 
     printf("Tests run: %d\n\n", tests_run);
 
