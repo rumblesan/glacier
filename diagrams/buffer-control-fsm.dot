@@ -1,35 +1,37 @@
 digraph G {
 
-  node [ shape="diamond" ];
-  hasAudio [ label="has recorded audio" ];
-  overdubActive [ label="overdubbing is on" ];
+  Stopped [ shape="oval" ];
+  Armed [ shape="oval" ];
+  hasAudio [ label="has recorded audio", shape="diamond" ];
+  Cued [ shape="oval" ];
+  playSyncLogic [ label="Timing Sync Logic", shape="box" ];
+  Recording [ shape="oval" ];
+  Concluding [ shape="oval" ];
+  Playing [ shape="oval" ];
+  overdubActive [ label="overdubbing is on", shape="diamond" ];
+  Overdubbing [ shape="oval" ];
 
-  node [ shape="box" ];
-  recordSyncLogic [ label="Timing Sync Logic" ];
-  playSyncLogic [ label="Timing Sync Logic" ];
-
-  node [ shape="oval" ];
   Stopped -> Armed [ label="Record\nAction" ];
-  Stopped -> hasAudio [ label="Play\nAction" ];
+  Stopped -> hasAudio [ label="Playback\nAction" ];
   hasAudio -> Stopped [ label="no" ];
   hasAudio -> Cued [ label="yes" ];
 
-  Cued -> playSyncLogic;
+  Cued -> playSyncLogic [ label="Phrase Sync\nAction" ];
   playSyncLogic -> Playing;
 
-  Armed -> Stopped [ label="Play\nAction" ];
-  Armed -> Recording [ label="On\nPhrase\nSync" ];
+  Armed -> Stopped [ label="Playback\nAction" ];
+  Armed -> Recording [ label="Phrase Sync\nAction" ];
 
-  Recording -> Stopped [ label="Play\nAction" ];
-  Recording -> recordSyncLogic [ label="Record\nAction" ];
-  recordSyncLogic -> Playing;
+  Recording -> Stopped [ label="Playback\nAction" ];
+  Recording -> Concluding [ label="Record\nAction" ];
+  Concluding -> playSyncLogic [ label="Phrase Sync\nAction" ];
 
-  Playing -> Stopped [ label="Play\nAction" ];
+  Playing -> Stopped [ label="Playback\nAction" ];
   Playing -> overdubActive [ label="Record\nAction" ];
   overdubActive -> Armed [ label="no" ];
   overdubActive -> Overdubbing [ label="yes" ];
 
-  Overdubbing -> Stopped [ label="Play\nAction" ];
+  Overdubbing -> Stopped [ label="Playback\nAction" ];
   Overdubbing -> Playing [ label="Record\nAction" ];
 
 }
