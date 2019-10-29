@@ -1,0 +1,15 @@
+digraph G {
+
+  Empty -> Running [ label="First buffer\nfinised recording" ];
+
+  Running -> allStopped [ label="buffer\nstopped" ];
+  allStopped [ label="are all buffers\nnow stopped?", shape="diamond" ];
+  allStopped -> Running [ label="no" ];
+  allStopped -> Stopped [ label="yes" ];
+
+  Stopped -> allEmpty [ label="buffer\ncleared" ];
+  allEmpty [ label="are all buffers\nempty?", shape="diamond" ];
+  allEmpty -> Stopped [ label="no" ];
+  allEmpty -> Empty [ label="yes" ];
+
+}
