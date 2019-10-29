@@ -25,9 +25,15 @@ typedef struct AudioBuffer {
 
 AudioBuffer *ab_create(unsigned int max_length, unsigned int channels);
 
+void ab_start_playing(AudioBuffer *ab);
+
+void ab_stop_playing(AudioBuffer *ab);
+
 void ab_start_recording(AudioBuffer *ab);
 
 void ab_stop_recording(AudioBuffer *ab);
+
+void ab_cancel_recording(AudioBuffer *ab);
 
 void ab_record(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long sample_count);
 

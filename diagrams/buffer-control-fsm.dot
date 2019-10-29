@@ -18,6 +18,7 @@ digraph G {
 
   Cued -> playSyncLogic [ label="Phrase Sync\nAction" ];
   playSyncLogic -> Playing;
+  Cued -> Stopped [ label="Playback\nAction" ];
 
   Armed -> Stopped [ label="Playback\nAction" ];
   Armed -> Recording [ label="Phrase Sync\nAction" ];

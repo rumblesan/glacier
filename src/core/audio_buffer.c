@@ -31,6 +31,17 @@ error:
   return NULL;
 }
 
+void ab_start_playing(AudioBuffer *ab) {
+  if (!ab->recording) { ab->playing = true; }
+}
+
+void ab_stop_playing(AudioBuffer *ab) {
+  if (ab->playing) {
+    ab->playing = false;
+    ab->playback_head_pos = 0;
+  }
+}
+
 void ab_start_recording(AudioBuffer *ab) {
   if (!ab->recording) { ab->recording = true; }
 }
@@ -38,6 +49,14 @@ void ab_start_recording(AudioBuffer *ab) {
 void ab_stop_recording(AudioBuffer *ab) {
   if (ab->recording) {
     ab->length = ab->record_head_pos;
+    ab->record_head_pos = 0;
+    ab->recording = false;
+  }
+}
+
+void ab_cancel_recording(AudioBuffer *ab) {
+  if (ab->recording) {
+    ab->length = 0;
     ab->record_head_pos = 0;
     ab->recording = false;
   }
