@@ -1,6 +1,7 @@
 #ifndef __GLACIER_BUFFER_CONTROL_FSM__
 #define __GLACIER_BUFFER_CONTROL_FSM__
 
+#include "types.h"
 #include "audio_buffer.h"
 
 typedef enum audio_buffer_actions {
@@ -23,6 +24,8 @@ typedef enum audio_buffer_state {
 
 typedef struct AudioBufferControl {
 
+  unsigned int buffer_id;
+
   AudioBuffer *buffer;
 
   AudioBufferState state;
@@ -31,9 +34,15 @@ typedef struct AudioBufferControl {
 
 } AudioBufferControl;
 
-AudioBufferControl *abc_create(AudioBuffer *buffer);
+AudioBufferControl *abc_create(unsigned int buffer_id, AudioBuffer *buffer);
 
 AudioBufferState abc_handle_action(AudioBufferControl *abc, AudioBufferAction action);
+
+bool abc_is_playing(AudioBufferControl *abc);
+
+void abc_handle_audio(AudioBufferControl *abc, const SAMPLE *input_samples, unsigned long sample_count);
+
+void abc_playback_mix(AudioBufferControl *abc, SAMPLE *output_samples, unsigned long sample_count);
 
 void abc_destroy(AudioBufferControl *abc);
 

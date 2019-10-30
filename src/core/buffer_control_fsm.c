@@ -7,9 +7,11 @@
 #include "buffer_control_fsm.h"
 #include "audio_buffer.h"
 
-AudioBufferControl *abc_create(AudioBuffer *buffer) {
+AudioBufferControl *abc_create(unsigned int buffer_id, AudioBuffer *buffer) {
   AudioBufferControl *abc = malloc(sizeof(AudioBufferControl));
   check_mem(abc);
+
+  abc->buffer_id = buffer_id;
 
   check(buffer != NULL, "Invalid audio buffer given");
   abc->buffer = buffer;
@@ -63,7 +65,6 @@ AudioBufferState _abc_armed_handle_action(AudioBufferControl *abc, AudioBufferAc
       abc->state = AudioBuffer_State_Armed;
       break;
     case AudioBuffer_Action_Sync:
-      ab_start_recording(abc->buffer);
       abc->state = AudioBuffer_State_Recording;
       break;
     case AudioBuffer_Action_ToggleOverdubbing:
@@ -85,7 +86,6 @@ AudioBufferState _abc_cued_handle_action(AudioBufferControl *abc, AudioBufferAct
       break;
     case AudioBuffer_Action_Sync:
       // TODO going to need some sync timing logic here
-      ab_start_playing(abc->buffer);
       abc->state = AudioBuffer_State_Playing;
       break;
     case AudioBuffer_Action_ToggleOverdubbing:
@@ -98,7 +98,6 @@ AudioBufferState _abc_cued_handle_action(AudioBufferControl *abc, AudioBufferAct
 AudioBufferState _abc_recording_handle_action(AudioBufferControl *abc, AudioBufferAction action) {
   switch(action) {
     case AudioBuffer_Action_Playback:
-      ab_cancel_recording(abc->buffer);
       abc->state = AudioBuffer_State_Stopped;
       break;
     case AudioBuffer_Action_Record:
@@ -128,8 +127,6 @@ AudioBufferState _abc_concluding_handle_action(AudioBufferControl *abc, AudioBuf
       break;
     case AudioBuffer_Action_Sync:
       // TODO going to need some sync timing logic here
-      ab_stop_recording(abc->buffer);
-      ab_start_playing(abc->buffer);
       abc->state = AudioBuffer_State_Playing;
       break;
     case AudioBuffer_Action_ToggleOverdubbing:
@@ -144,12 +141,10 @@ AudioBufferState _abc_playing_handle_action(AudioBufferControl *abc, AudioBuffer
   switch(action) {
     case AudioBuffer_Action_Playback:
       // TODO possibly going to need some sync timing logic here?
-      ab_stop_playing(abc->buffer);
       abc->state = AudioBuffer_State_Stopped;
       break;
     case AudioBuffer_Action_Record:
       if (abc->overdubbing_enabled) {
-        abc->buffer->overdub = true;
         abc->state = AudioBuffer_State_Overdubbing;
       } else {
         abc->state = AudioBuffer_State_Armed;
@@ -172,11 +167,9 @@ AudioBufferState _abc_overdubbing_handle_action(AudioBufferControl *abc, AudioBu
   switch(action) {
     case AudioBuffer_Action_Playback:
       // TODO possibly going to need some sync timing logic here?
-      ab_stop_playing(abc->buffer);
       abc->state = AudioBuffer_State_Stopped;
       break;
     case AudioBuffer_Action_Record:
-      abc->buffer->overdub = false;
       abc->state = AudioBuffer_State_Playing;
       break;
     case AudioBuffer_Action_Sync:
@@ -210,6 +203,28 @@ AudioBufferState abc_handle_action(AudioBufferControl *abc, AudioBufferAction ac
     case AudioBuffer_State_Overdubbing:
       return _abc_overdubbing_handle_action(abc, action);
   }
+}
+
+bool abc_is_playing(AudioBufferControl *abc) {
+  return abc-> state == AudioBuffer_State_Playing;
+}
+
+void abc_handle_audio(AudioBufferControl *abc, const SAMPLE *input_samples, unsigned long sample_count) {
+  switch (abc->state) {
+    case AudioBuffer_State_Recording:
+      ab_record(abc->buffer, input_samples, sample_count);
+      break;
+    case AudioBuffer_State_Overdubbing:
+      ab_overdub(abc->buffer, input_samples, sample_count);
+      break;
+    default:
+      break;
+  }
+}
+
+void abc_playback_mix(AudioBufferControl *abc, SAMPLE *output_samples, unsigned long sample_count) {
+  if (abc->state != AudioBuffer_State_Playing) { return ; }
+  ab_playback_mix(abc->buffer, output_samples, sample_count);
 }
 
 void abc_destroy(AudioBufferControl *abc) {

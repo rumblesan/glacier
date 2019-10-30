@@ -22,54 +22,18 @@ AudioBuffer *ab_create(unsigned int max_length, unsigned int channels) {
   ab->max_length = max_length * channels;
   ab->channels = channels;
 
-  ab->recording = false;
-  ab->playing = false;
-  ab->overdub = false;
-
   return ab;
 error:
   return NULL;
 }
 
-void ab_start_playing(AudioBuffer *ab) {
-  if (!ab->recording) { ab->playing = true; }
-}
-
-void ab_stop_playing(AudioBuffer *ab) {
-  if (ab->playing) {
-    ab->playing = false;
-    ab->playback_head_pos = 0;
-  }
-}
-
-void ab_start_recording(AudioBuffer *ab) {
-  if (!ab->recording) { ab->recording = true; }
-}
-
-void ab_stop_recording(AudioBuffer *ab) {
-  if (ab->recording) {
-    ab->length = ab->record_head_pos;
-    ab->record_head_pos = 0;
-    ab->recording = false;
-  }
-}
-
-void ab_cancel_recording(AudioBuffer *ab) {
-  if (ab->recording) {
-    ab->length = 0;
-    ab->record_head_pos = 0;
-    ab->recording = false;
-  }
-}
-
-void ab_record(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long frame_count) {
-  if (ab->recording) { return; }
+bool ab_record(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long frame_count) {
 
   int sample_count = frame_count * ab->channels;
-  bool stop_recording = false;
+  bool still_recording = true;
 
   if (ab->record_head_pos + sample_count >= ab->max_length) {
-    stop_recording = true;
+    still_recording = false;
     sample_count = ab->max_length - ab->record_head_pos;
   }
 
@@ -77,13 +41,29 @@ void ab_record(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long frame
   memcpy(ab->samples + ab->record_head_pos, input_samples, bytes);
   ab->record_head_pos += sample_count;
 
-  if (stop_recording) {
-    ab_stop_recording(ab);
+  return still_recording;
+}
+
+bool ab_overdub(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long frame_count) {
+
+  int sample_count = frame_count * ab->channels;
+  bool still_recording = true;
+
+  if (ab->record_head_pos + sample_count >= ab->max_length) {
+    still_recording = false;
+    sample_count = ab->max_length - ab->record_head_pos;
   }
+
+  for (int i = 0; i < sample_count; i++) {
+    ab->samples[ab->record_head_pos + i] += input_samples[i];
+  }
+  ab->record_head_pos += sample_count;
+
+  return still_recording;
 }
 
 void ab_playback_mix(AudioBuffer *ab, SAMPLE *output_samples, unsigned long frame_count) {
-  if (ab->length <= 0 || ab->recording) { return; }
+  if (ab->length <= 0) { return; }
 
   int sample_count = frame_count * ab->channels;
 
