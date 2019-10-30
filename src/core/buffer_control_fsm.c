@@ -206,7 +206,11 @@ AudioBufferState abc_handle_action(AudioBufferControl *abc, AudioBufferAction ac
 }
 
 bool abc_is_playing(AudioBufferControl *abc) {
-  return abc-> state == AudioBuffer_State_Playing;
+  return abc->state == AudioBuffer_State_Playing;
+}
+
+bool abc_is_empty(AudioBufferControl *abc) {
+  return abc->buffer->length <= 0;
 }
 
 void abc_handle_audio(AudioBufferControl *abc, const SAMPLE *input_samples, unsigned long sample_count) {

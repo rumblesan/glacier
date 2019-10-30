@@ -40,6 +40,8 @@ AudioBufferState abc_handle_action(AudioBufferControl *abc, AudioBufferAction ac
 
 bool abc_is_playing(AudioBufferControl *abc);
 
+bool abc_is_empty(AudioBufferControl *abc);
+
 void abc_handle_audio(AudioBufferControl *abc, const SAMPLE *input_samples, unsigned long sample_count);
 
 void abc_playback_mix(AudioBufferControl *abc, SAMPLE *output_samples, unsigned long sample_count);
