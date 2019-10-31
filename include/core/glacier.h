@@ -18,7 +18,7 @@ typedef struct GlacierAppState {
   SyncControl *syncer;
 
   AudioBuffer **buffers;
-  LoopTrack ** loop_tracks;
+  LoopTrack **loop_tracks;
 
 } GlacierAppState;
 
