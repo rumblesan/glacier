@@ -54,17 +54,13 @@ error:
 void gs_destroy(GlacierState *gs) {
   check(gs != NULL, "Invalid Glacier State");
 
-  check(gs->buffers != NULL, "Invalid Glacier State buffer list");
-  for (int i = 0; i < gs->buffer_count; i++) {
-    ab_destroy(gs->buffers[i]);
-  }
-  free(gs->buffers);
-
   check(gs->buffer_controls != NULL, "Invalid Glacier State buffer control list");
   for (int i = 0; i < gs->buffer_count; i++) {
     abc_destroy(gs->buffer_controls[i]);
   }
   free(gs->buffer_controls);
+  // buffers are free when buffer control is destroyed
+  free(gs->buffers);
 
   check(gs->syncer != NULL, "Invalid Glacier State Syncer");
   sc_destroy(gs->syncer);
