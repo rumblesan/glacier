@@ -4,6 +4,8 @@
 #include "ck_ring.h"
 
 #include "types.h"
+#include "sync_control.h"
+#include "buffer_control_fsm.h"
 #include "audio_buffer.h"
 
 typedef struct GlacierState {
@@ -13,7 +15,10 @@ typedef struct GlacierState {
   ck_ring_buffer_t *control_bus_buffer;
   ck_ring_t *control_bus;
 
+  SyncControl *syncer;
+
   AudioBuffer **buffers;
+  AudioBufferControl ** buffer_controls;
 
 } GlacierState;
 

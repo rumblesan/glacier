@@ -6,6 +6,8 @@
 
 #include "state.h"
 #include "types.h"
+#include "sync_control.h"
+#include "buffer_control_fsm.h"
 #include "audio_buffer.h"
 
 GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels) {
@@ -33,6 +35,15 @@ GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels) {
     gs->buffers[i] = ab_create(max_buffer_length, channels);
     check_mem(gs->buffers[i]);
   }
+  gs->buffer_controls = malloc(sizeof(AudioBufferControl*) * buffer_count);
+  check_mem(gs->buffer_controls);
+  for (int i = 0; i < buffer_count; i++) {
+    gs->buffer_controls[i] = abc_create(i, gs->buffers[i]);
+    check_mem(gs->buffer_controls[i]);
+  }
+
+  gs->syncer = sc_create(gs->buffer_controls, buffer_count);
+  check_mem(gs->syncer);
 
   return gs;
 error:
@@ -42,11 +53,22 @@ error:
 
 void gs_destroy(GlacierState *gs) {
   check(gs != NULL, "Invalid Glacier State");
+
   check(gs->buffers != NULL, "Invalid Glacier State buffer list");
   for (int i = 0; i < gs->buffer_count; i++) {
     ab_destroy(gs->buffers[i]);
   }
   free(gs->buffers);
+
+  check(gs->buffer_controls != NULL, "Invalid Glacier State buffer control list");
+  for (int i = 0; i < gs->buffer_count; i++) {
+    abc_destroy(gs->buffer_controls[i]);
+  }
+  free(gs->buffer_controls);
+
+  check(gs->syncer != NULL, "Invalid Glacier State Syncer");
+  sc_destroy(gs->syncer);
+
   free(gs);
   return;
 error:
