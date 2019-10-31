@@ -8,7 +8,9 @@
 
 #define mu_suite_start() char *message = NULL
 
-#define mu_assert(test, message) if (!(test)) { log_err(message); return message; }
+#define test_err(M, ...) fprintf(stderr, "[FAILURE] (%s:%d) " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+
+#define mu_assert(test, message) if (!(test)) { test_err(message); return message; }
 #define mu_run_test(test) log_info("\n-----%s", " " #test); \
     message = test(); tests_run++; if (message) return message;
 
