@@ -5,7 +5,7 @@
 
 #include "core/types.h"
 #include "core/sync_control.h"
-#include "core/buffer_control_fsm.h"
+#include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
 typedef struct GlacierState {
@@ -18,7 +18,7 @@ typedef struct GlacierState {
   SyncControl *syncer;
 
   AudioBuffer **buffers;
-  AudioBufferControl ** buffer_controls;
+  LoopTrack ** loop_tracks;
 
 } GlacierState;
 

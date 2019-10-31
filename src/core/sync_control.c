@@ -5,15 +5,15 @@
 #include "dbg.h"
 
 #include "core/sync_control.h"
-#include "core/buffer_control_fsm.h"
+#include "core/loop_track.h"
 
-SyncControl *sc_create(AudioBufferControl **buffers, unsigned int buffer_count) {
+SyncControl *sc_create(LoopTrack **loop_tracks, unsigned int track_count) {
   SyncControl *sc = malloc(sizeof(SyncControl));
   check_mem(sc);
 
-  check_mem(buffers);
-  sc->buffers = buffers;
-  sc->buffer_count = buffer_count;
+  check_mem(loop_tracks);
+  sc->loop_tracks = loop_tracks;
+  sc->track_count = track_count;
 
   sc->sync_count = 0;
   sc->sync_length = 0;
@@ -49,18 +49,18 @@ SyncControlState sc_buffer_recorded(SyncControl *sc, unsigned int record_length)
 }
 
 SyncControlState sc_buffer_stopped(SyncControl *sc) {
-  int running_buffers = 0;
+  int running_loop_tracks = 0;
   switch (sc->state) {
     case SyncControl_State_Empty:
       // TODO shouldn't occur, but maybe check?
       break;
     case SyncControl_State_Running:
-      for (int i = 0; i < sc->buffer_count; i++) {
-        if (abc_is_playing(sc->buffers[i])) {
-          running_buffers += 1;
+      for (int i = 0; i < sc->track_count; i++) {
+        if (lt_is_playing(sc->loop_tracks[i])) {
+          running_loop_tracks += 1;
         }
       }
-      if (running_buffers == 0) {
+      if (running_loop_tracks == 0) {
         sc->state = SyncControl_State_Stopped;
       }
       // do nothing
@@ -73,29 +73,29 @@ SyncControlState sc_buffer_stopped(SyncControl *sc) {
 }
 
 SyncControlState sc_buffer_cleared(SyncControl *sc) {
-  int empty_buffers = 0;
+  int empty_loop_tracks = 0;
   switch (sc->state) {
     case SyncControl_State_Empty:
       // TODO shouldn't occur, but maybe check?
       break;
     case SyncControl_State_Running:
-      for (int i = 0; i < sc->buffer_count; i++) {
-        if (abc_is_empty(sc->buffers[i])) {
-          empty_buffers += 1;
+      for (int i = 0; i < sc->track_count; i++) {
+        if (lt_is_empty(sc->loop_tracks[i])) {
+          empty_loop_tracks += 1;
         }
       }
-      if (empty_buffers == sc->buffer_count) {
+      if (empty_loop_tracks == sc->track_count) {
         sc->state = SyncControl_State_Empty;
       }
       // do nothing
       break;
     case SyncControl_State_Stopped:
-      for (int i = 0; i < sc->buffer_count; i++) {
-        if (abc_is_empty(sc->buffers[i])) {
-          empty_buffers += 1;
+      for (int i = 0; i < sc->track_count; i++) {
+        if (lt_is_empty(sc->loop_tracks[i])) {
+          empty_loop_tracks += 1;
         }
       }
-      if (empty_buffers == sc->buffer_count) {
+      if (empty_loop_tracks == sc->track_count) {
         sc->state = SyncControl_State_Empty;
       }
       // do nothing

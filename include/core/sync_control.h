@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "core/types.h"
-#include "core/buffer_control_fsm.h"
+#include "core/loop_track.h"
 
 typedef enum sync_control_state {
   SyncControl_State_Empty,
@@ -29,9 +29,9 @@ typedef struct SyncTimingMessage {
 
 typedef struct SyncControl {
 
-  AudioBufferControl **buffers;
+  LoopTrack **loop_tracks;
 
-  unsigned int buffer_count;
+  unsigned int track_count;
 
   unsigned int sync_length;
   unsigned int three_quarter_length;
@@ -44,7 +44,7 @@ typedef struct SyncControl {
 
 } SyncControl;
 
-SyncControl *sc_create(AudioBufferControl **buffers, unsigned int buffer_count);
+SyncControl *sc_create(LoopTrack **loop_tracks, unsigned int track_count);
 
 SyncControlState sc_buffer_recorded(SyncControl *sc, unsigned int record_length);
 

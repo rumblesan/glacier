@@ -1,16 +1,16 @@
 #include "tests/minunit.h"
 
 #include "core/sync_control.h"
-#include "core/buffer_control_fsm.h"
+#include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
-void _cleanup(SyncControl *sc, int buffer_count, AudioBuffer **buffers, AudioBufferControl **buffer_controls) {
+void _cleanup(SyncControl *sc, int buffer_count, AudioBuffer **buffers, LoopTrack **loop_tracks) {
   sc_destroy(sc);
 
   for (int i = 0; i < buffer_count; i++) {
-    abc_destroy(buffer_controls[i]);
+    lt_destroy(loop_tracks[i]);
   }
-  free(buffer_controls);
+  free(loop_tracks);
 
   // buffers are free when buffer control is destroyed
   free(buffers);
@@ -25,17 +25,17 @@ char *test_sync_control_create() {
     buffers[i] = ab_create(1024, 2);
   }
 
-  AudioBufferControl **buffer_controls = malloc(sizeof(AudioBufferControl*) * buffer_count);
+  LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * buffer_count);
   for (int i = 0; i < buffer_count; i++) {
-    buffer_controls[i] = abc_create(i, buffers[i]);
+    loop_tracks[i] = lt_create(i, buffers[i]);
   }
 
-  SyncControl *sc = sc_create(buffer_controls, buffer_count);
+  SyncControl *sc = sc_create(loop_tracks, buffer_count);
   mu_assert(sc != NULL, "Could not create Sync Control");
 
   mu_assert(sc->state == SyncControl_State_Empty, "Sync Control should start in empty state");
 
-  _cleanup(sc, buffer_count, buffers, buffer_controls);
+  _cleanup(sc, buffer_count, buffers, loop_tracks);
 
   return NULL;
 }
@@ -47,12 +47,12 @@ char *test_syncing() {
     buffers[i] = ab_create(1024, 2);
   }
 
-  AudioBufferControl **buffer_controls = malloc(sizeof(AudioBufferControl*) * buffer_count);
+  LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * buffer_count);
   for (int i = 0; i < buffer_count; i++) {
-    buffer_controls[i] = abc_create(i, buffers[i]);
+    loop_tracks[i] = lt_create(i, buffers[i]);
   }
 
-  SyncControl *sc = sc_create(buffer_controls, buffer_count);
+  SyncControl *sc = sc_create(loop_tracks, buffer_count);
   mu_assert(sc != NULL, "Could not create Sync Control");
 
 
@@ -88,7 +88,7 @@ char *test_syncing() {
   mu_assert(timing7.interval == SyncControl_Interval_Whole, "Sync Control send whole sync");
   mu_assert(timing7.offset == 17, "Sync Control should have an offset of 17");
 
-  _cleanup(sc, buffer_count, buffers, buffer_controls);
+  _cleanup(sc, buffer_count, buffers, loop_tracks);
 
   return NULL;
 }
