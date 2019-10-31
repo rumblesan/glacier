@@ -4,6 +4,19 @@
 #include "buffer_control_fsm.h"
 #include "audio_buffer.h"
 
+void _cleanup(SyncControl *sc, int buffer_count, AudioBuffer **buffers, AudioBufferControl **buffer_controls) {
+  sc_destroy(sc);
+
+  for (int i = 0; i < buffer_count; i++) {
+    abc_destroy(buffer_controls[i]);
+  }
+  free(buffer_controls);
+
+  // buffers are free when buffer control is destroyed
+  free(buffers);
+
+}
+
 char *test_sync_control_create() {
 
   int buffer_count = 3;
@@ -22,15 +35,60 @@ char *test_sync_control_create() {
 
   mu_assert(sc->state == SyncControl_State_Empty, "Sync Control should start in empty state");
 
-  sc_destroy(sc);
+  _cleanup(sc, buffer_count, buffers, buffer_controls);
 
+  return NULL;
+}
+
+char *test_syncing() {
+  int buffer_count = 3;
+  AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * buffer_count);
   for (int i = 0; i < buffer_count; i++) {
-    abc_destroy(buffer_controls[i]);
+    buffers[i] = ab_create(1024, 2);
   }
-  free(buffer_controls);
 
-  // buffers are free when buffer control is destroyed
-  free(buffers);
+  AudioBufferControl **buffer_controls = malloc(sizeof(AudioBufferControl*) * buffer_count);
+  for (int i = 0; i < buffer_count; i++) {
+    buffer_controls[i] = abc_create(i, buffers[i]);
+  }
+
+  SyncControl *sc = sc_create(buffer_controls, buffer_count);
+  mu_assert(sc != NULL, "Could not create Sync Control");
+
+
+  unsigned int recorded_length = 100;
+  buffers[0]->length = recorded_length;
+  SyncControlState after_start = sc_buffer_recorded(sc, recorded_length);
+  mu_assert(after_start == SyncControl_State_Running, "Sync Control should be running");
+
+  SyncTimingMessage timing1 = sc_keep_sync(sc, 20);
+  mu_assert(timing1.interval == SyncControl_Interval_None, "Sync Control shouldn't sync yet");
+
+  SyncTimingMessage timing2 = sc_keep_sync(sc, 20);
+  mu_assert(timing2.interval == SyncControl_Interval_Quarter, "Sync Control should send quarter sync");
+  mu_assert(timing2.offset == 15, "Sync Control should have an offset of 15");
+
+  SyncTimingMessage timing3 = sc_keep_sync(sc, 25);
+  mu_assert(timing3.interval == SyncControl_Interval_Half, "Sync Control should send half sync");
+  mu_assert(timing3.offset == 15, "Sync Control should have an offset of 15");
+
+  SyncTimingMessage timing4 = sc_keep_sync(sc, 5);
+  mu_assert(timing4.interval == SyncControl_Interval_None, "Sync Control shouldn't sync");
+  mu_assert(timing4.offset == 0, "Sync Control should have an offset of 0");
+
+  SyncTimingMessage timing5 = sc_keep_sync(sc, 20);
+  mu_assert(timing5.interval == SyncControl_Interval_Quarter, "Sync Control should send quarter sync");
+  mu_assert(timing5.offset == 15, "Sync Control should have an offset of 15");
+
+  SyncTimingMessage timing6 = sc_keep_sync(sc, 7);
+  mu_assert(timing6.interval == SyncControl_Interval_None, "Sync Control shouldn't sync here");
+  mu_assert(timing6.offset == 0, "Sync Control should have an offset of 0");
+
+  SyncTimingMessage timing7 = sc_keep_sync(sc, 20);
+  mu_assert(timing7.interval == SyncControl_Interval_Whole, "Sync Control send whole sync");
+  mu_assert(timing7.offset == 17, "Sync Control should have an offset of 17");
+
+  _cleanup(sc, buffer_count, buffers, buffer_controls);
 
   return NULL;
 }
@@ -39,6 +97,7 @@ char *test_sync_control() {
   mu_suite_start();
 
   mu_run_test(test_sync_control_create);
+  mu_run_test(test_syncing);
 
   return NULL;
 }

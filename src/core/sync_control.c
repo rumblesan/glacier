@@ -15,6 +15,7 @@ SyncControl *sc_create(AudioBufferControl **buffers, unsigned int buffer_count) 
   sc->buffers = buffers;
   sc->buffer_count = buffer_count;
 
+  sc->sync_count = 0;
   sc->sync_length = 0;
   sc->half_length = 0;
   sc->quarter_length = 0;
@@ -34,6 +35,7 @@ SyncControlState sc_buffer_recorded(SyncControl *sc, unsigned int record_length)
         sc->sync_length = record_length;
         sc->half_length = record_length / 2;
         sc->quarter_length = record_length / 4;
+        sc->three_quarter_length = sc->quarter_length + sc->half_length;
       }
       break;
     case SyncControl_State_Running:
@@ -109,6 +111,7 @@ SyncTimingMessage sc_keep_sync(SyncControl *sc, unsigned int count_increase) {
     return sm;
   }
 
+  SyncTimingMessage sm = { SyncControl_Interval_None, 0 };
   SyncControlInterval interval = SyncControl_Interval_None;
   unsigned int offset = 0;
   unsigned int new_count = sc->sync_count + count_increase;
@@ -117,6 +120,10 @@ SyncTimingMessage sc_keep_sync(SyncControl *sc, unsigned int count_increase) {
     interval = SyncControl_Interval_Whole;
     offset = new_count - sc->sync_length;
     sc->sync_count = offset;
+  } else if (sc->sync_count < sc->three_quarter_length && new_count >= sc->three_quarter_length) {
+    interval = SyncControl_Interval_Quarter;
+    offset = new_count - sc->three_quarter_length;
+    sc->sync_count = new_count;
   } else if (sc->sync_count < sc->half_length && new_count >= sc->half_length) {
     interval = SyncControl_Interval_Half;
     offset = new_count - sc->half_length;
@@ -125,9 +132,12 @@ SyncTimingMessage sc_keep_sync(SyncControl *sc, unsigned int count_increase) {
     interval = SyncControl_Interval_Quarter;
     offset = new_count - sc->quarter_length;
     sc->sync_count = new_count;
+  } else {
+    sc->sync_count = new_count;
   }
 
-  SyncTimingMessage sm = { interval, offset };
+  sm.interval = interval;
+  sm.offset = offset;
   return sm;
 }
 

@@ -34,6 +34,7 @@ typedef struct SyncControl {
   unsigned int buffer_count;
 
   unsigned int sync_length;
+  unsigned int three_quarter_length;
   unsigned int half_length;
   unsigned int quarter_length;
 
