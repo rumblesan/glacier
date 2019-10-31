@@ -1,8 +1,8 @@
 #include "tests/minunit.h"
 
-#include "sync_control.h"
-#include "buffer_control_fsm.h"
-#include "audio_buffer.h"
+#include "core/sync_control.h"
+#include "core/buffer_control_fsm.h"
+#include "core/audio_buffer.h"
 
 void _cleanup(SyncControl *sc, int buffer_count, AudioBuffer **buffers, AudioBufferControl **buffer_controls) {
   sc_destroy(sc);

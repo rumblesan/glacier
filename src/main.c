@@ -4,9 +4,9 @@
 
 #include "dbg.h"
 
-#include "types.h"
-#include "state.h"
-#include "control_message.h"
+#include "core/types.h"
+#include "core/state.h"
+#include "core/control_message.h"
 
 #define SAMPLE_RATE         (48000)
 #define PA_SAMPLE_TYPE      paFloat32

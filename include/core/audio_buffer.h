@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "types.h"
+#include "core/types.h"
 
 typedef struct AudioBuffer {
   SAMPLE *samples;

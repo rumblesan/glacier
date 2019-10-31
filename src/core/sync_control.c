@@ -4,8 +4,8 @@
 
 #include "dbg.h"
 
-#include "sync_control.h"
-#include "buffer_control_fsm.h"
+#include "core/sync_control.h"
+#include "core/buffer_control_fsm.h"
 
 SyncControl *sc_create(AudioBufferControl **buffers, unsigned int buffer_count) {
   SyncControl *sc = malloc(sizeof(SyncControl));

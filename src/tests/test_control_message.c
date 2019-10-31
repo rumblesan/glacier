@@ -1,6 +1,6 @@
 #include "tests/minunit.h"
 
-#include "control_message.h"
+#include "core/control_message.h"
 
 char *test_control_message_create() {
 

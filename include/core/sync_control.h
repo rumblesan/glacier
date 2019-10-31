@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include "types.h"
-#include "buffer_control_fsm.h"
+#include "core/types.h"
+#include "core/buffer_control_fsm.h"
 
 typedef enum sync_control_state {
   SyncControl_State_Empty,

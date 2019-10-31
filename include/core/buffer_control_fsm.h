@@ -1,8 +1,8 @@
 #ifndef __GLACIER_BUFFER_CONTROL_FSM__
 #define __GLACIER_BUFFER_CONTROL_FSM__
 
-#include "types.h"
-#include "audio_buffer.h"
+#include "core/types.h"
+#include "core/audio_buffer.h"
 
 typedef enum audio_buffer_actions {
   AudioBuffer_Action_Playback,

@@ -4,8 +4,8 @@
 
 #include "dbg.h"
 
-#include "audio_buffer.h"
-#include "types.h"
+#include "core/types.h"
+#include "core/audio_buffer.h"
 
 AudioBuffer *ab_create(unsigned int max_length, unsigned int channels) {
   AudioBuffer *ab = malloc(sizeof(AudioBuffer));

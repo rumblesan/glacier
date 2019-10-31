@@ -1,14 +1,14 @@
 #include <stdlib.h>
 #include <assert.h>
-
-#include "dbg.h"
 #include "ck_ring.h"
 
-#include "state.h"
-#include "types.h"
-#include "sync_control.h"
-#include "buffer_control_fsm.h"
-#include "audio_buffer.h"
+#include "dbg.h"
+
+#include "core/state.h"
+#include "core/types.h"
+#include "core/sync_control.h"
+#include "core/buffer_control_fsm.h"
+#include "core/audio_buffer.h"
 
 GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels) {
 

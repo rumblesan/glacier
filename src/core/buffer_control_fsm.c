@@ -4,8 +4,8 @@
 
 #include "dbg.h"
 
-#include "buffer_control_fsm.h"
-#include "audio_buffer.h"
+#include "core/buffer_control_fsm.h"
+#include "core/audio_buffer.h"
 
 AudioBufferControl *abc_create(unsigned int buffer_id, AudioBuffer *buffer) {
   AudioBufferControl *abc = malloc(sizeof(AudioBufferControl));

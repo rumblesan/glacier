@@ -3,7 +3,7 @@
 
 #include "dbg.h"
 
-#include "control_message.h"
+#include "core/control_message.h"
 
 ControlMessage *cm_create(int buffer_number, enum buffer_command cmd) {
   ControlMessage *cm = malloc(sizeof(ControlMessage));

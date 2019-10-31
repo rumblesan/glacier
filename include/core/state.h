@@ -3,10 +3,10 @@
 
 #include "ck_ring.h"
 
-#include "types.h"
-#include "sync_control.h"
-#include "buffer_control_fsm.h"
-#include "audio_buffer.h"
+#include "core/types.h"
+#include "core/sync_control.h"
+#include "core/buffer_control_fsm.h"
+#include "core/audio_buffer.h"
 
 typedef struct GlacierState {
   int buffer_count;
