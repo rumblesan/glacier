@@ -3,6 +3,7 @@
 #include "tests/minunit.h"
 #include "tests/test_control_message.h"
 #include "tests/test_sync_control.h"
+#include "tests/test_glacier_app.h"
 
 int tests_run;
 
@@ -30,6 +31,7 @@ int main(int argc, char *argv[]) {
     int result = 0;
     result = result || run_suite(&test_control_message, "Control Message");
     result = result || run_suite(&test_sync_control, "Sync Control");
+    result = result || run_suite(&test_glacier_app, "Glacier App");
 
     printf("Tests run: %d\n\n", tests_run);
 

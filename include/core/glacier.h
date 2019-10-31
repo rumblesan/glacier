@@ -1,5 +1,5 @@
-#ifndef __GLACIER_STATE__
-#define __GLACIER_STATE__
+#ifndef __GLACIER_APP__
+#define __GLACIER_APP__
 
 #include "ck_ring.h"
 
@@ -8,7 +8,7 @@
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
-typedef struct GlacierState {
+typedef struct GlacierAppState {
   int buffer_count;
   int channels;
 
@@ -20,10 +20,10 @@ typedef struct GlacierState {
   AudioBuffer **buffers;
   LoopTrack ** loop_tracks;
 
-} GlacierState;
+} GlacierAppState;
 
-GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels);
+GlacierAppState *glacier_create(int buffer_count, unsigned int max_buffer_length, int channels);
 
-void gs_destroy(GlacierState *gs);
+void glacier_destroy(GlacierAppState *glacier);
 
 #endif

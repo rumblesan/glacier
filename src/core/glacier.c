@@ -4,15 +4,15 @@
 
 #include "dbg.h"
 
-#include "core/state.h"
+#include "core/glacier.h"
 #include "core/types.h"
 #include "core/sync_control.h"
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
-GlacierState *gs_create(int buffer_count, int max_buffer_length, int channels) {
+GlacierAppState *glacier_create(int buffer_count, unsigned int max_buffer_length, int channels) {
 
-  GlacierState *gs = malloc(sizeof(GlacierState));
+  GlacierAppState *gs = malloc(sizeof(GlacierAppState));
   check_mem(gs);
 
   gs->buffer_count = buffer_count;
@@ -51,7 +51,7 @@ error:
 }
 
 
-void gs_destroy(GlacierState *gs) {
+void glacier_destroy(GlacierAppState *gs) {
   check(gs != NULL, "Invalid Glacier State");
 
   check(gs->loop_tracks != NULL, "Invalid Glacier State buffer control list");
