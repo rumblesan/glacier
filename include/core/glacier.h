@@ -9,7 +9,7 @@
 #include "core/audio_buffer.h"
 
 typedef struct GlacierAppState {
-  int buffer_count;
+  int track_count;
   int channels;
 
   ck_ring_buffer_t *control_bus_buffer;
@@ -22,7 +22,7 @@ typedef struct GlacierAppState {
 
 } GlacierAppState;
 
-GlacierAppState *glacier_create(int buffer_count, unsigned int max_buffer_length, int channels);
+GlacierAppState *glacier_create(int track_count, unsigned int max_buffer_length, int channels);
 
 void glacier_destroy(GlacierAppState *glacier);
 

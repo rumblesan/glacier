@@ -4,10 +4,10 @@
 
 char *test_glacier_app_create() {
 
-  int buffer_count = 3;
+  int track_count = 3;
   unsigned int max_buffer_length = 4000;
   int channels = 2;
-  GlacierAppState *glacier = glacier_create(buffer_count, max_buffer_length, channels);
+  GlacierAppState *glacier = glacier_create(track_count, max_buffer_length, channels);
 
   glacier_destroy(glacier);
 

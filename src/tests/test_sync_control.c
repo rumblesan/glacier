@@ -4,10 +4,10 @@
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
-void _cleanup(SyncControl *sc, int buffer_count, AudioBuffer **buffers, LoopTrack **loop_tracks) {
+void _cleanup(SyncControl *sc, int track_count, AudioBuffer **buffers, LoopTrack **loop_tracks) {
   sc_destroy(sc);
 
-  for (int i = 0; i < buffer_count; i++) {
+  for (int i = 0; i < track_count; i++) {
     lt_destroy(loop_tracks[i]);
   }
   free(loop_tracks);
@@ -19,40 +19,40 @@ void _cleanup(SyncControl *sc, int buffer_count, AudioBuffer **buffers, LoopTrac
 
 char *test_sync_control_create() {
 
-  int buffer_count = 3;
-  AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * buffer_count);
-  for (int i = 0; i < buffer_count; i++) {
+  int track_count = 3;
+  AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * track_count);
+  for (int i = 0; i < track_count; i++) {
     buffers[i] = ab_create(1024, 2);
   }
 
-  LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * buffer_count);
-  for (int i = 0; i < buffer_count; i++) {
+  LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
+  for (int i = 0; i < track_count; i++) {
     loop_tracks[i] = lt_create(i, buffers[i]);
   }
 
-  SyncControl *sc = sc_create(loop_tracks, buffer_count);
+  SyncControl *sc = sc_create(loop_tracks, track_count);
   mu_assert(sc != NULL, "Could not create Sync Control");
 
   mu_assert(sc->state == SyncControl_State_Empty, "Sync Control should start in empty state");
 
-  _cleanup(sc, buffer_count, buffers, loop_tracks);
+  _cleanup(sc, track_count, buffers, loop_tracks);
 
   return NULL;
 }
 
 char *test_syncing() {
-  int buffer_count = 3;
-  AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * buffer_count);
-  for (int i = 0; i < buffer_count; i++) {
+  int track_count = 3;
+  AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * track_count);
+  for (int i = 0; i < track_count; i++) {
     buffers[i] = ab_create(1024, 2);
   }
 
-  LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * buffer_count);
-  for (int i = 0; i < buffer_count; i++) {
+  LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
+  for (int i = 0; i < track_count; i++) {
     loop_tracks[i] = lt_create(i, buffers[i]);
   }
 
-  SyncControl *sc = sc_create(loop_tracks, buffer_count);
+  SyncControl *sc = sc_create(loop_tracks, track_count);
   mu_assert(sc != NULL, "Could not create Sync Control");
 
 
@@ -88,7 +88,7 @@ char *test_syncing() {
   mu_assert(timing7.interval == SyncControl_Interval_Whole, "Sync Control send whole sync");
   mu_assert(timing7.offset == 17, "Sync Control should have an offset of 17");
 
-  _cleanup(sc, buffer_count, buffers, loop_tracks);
+  _cleanup(sc, track_count, buffers, loop_tracks);
 
   return NULL;
 }

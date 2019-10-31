@@ -10,12 +10,12 @@
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
-GlacierAppState *glacier_create(int buffer_count, unsigned int max_buffer_length, int channels) {
+GlacierAppState *glacier_create(int track_count, unsigned int max_buffer_length, int channels) {
 
   GlacierAppState *gs = malloc(sizeof(GlacierAppState));
   check_mem(gs);
 
-  gs->buffer_count = buffer_count;
+  gs->track_count = track_count;
   gs->channels = channels;
 
   int control_bus_size = 1024;
@@ -29,20 +29,20 @@ GlacierAppState *glacier_create(int buffer_count, unsigned int max_buffer_length
 
   ck_ring_init(gs->control_bus, control_bus_size);
 
-  gs->buffers = malloc(sizeof(AudioBuffer*) * buffer_count);
+  gs->buffers = malloc(sizeof(AudioBuffer*) * track_count);
   check_mem(gs->buffers);
-  for (int i = 0; i < buffer_count; i++) {
+  for (int i = 0; i < track_count; i++) {
     gs->buffers[i] = ab_create(max_buffer_length, channels);
     check_mem(gs->buffers[i]);
   }
-  gs->loop_tracks = malloc(sizeof(LoopTrack*) * buffer_count);
+  gs->loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
   check_mem(gs->loop_tracks);
-  for (int i = 0; i < buffer_count; i++) {
+  for (int i = 0; i < track_count; i++) {
     gs->loop_tracks[i] = lt_create(i, gs->buffers[i]);
     check_mem(gs->loop_tracks[i]);
   }
 
-  gs->syncer = sc_create(gs->loop_tracks, buffer_count);
+  gs->syncer = sc_create(gs->loop_tracks, track_count);
   check_mem(gs->syncer);
 
   return gs;
@@ -55,7 +55,7 @@ void glacier_destroy(GlacierAppState *gs) {
   check(gs != NULL, "Invalid Glacier State");
 
   check(gs->loop_tracks != NULL, "Invalid Glacier State buffer control list");
-  for (int i = 0; i < gs->buffer_count; i++) {
+  for (int i = 0; i < gs->track_count; i++) {
     lt_destroy(gs->loop_tracks[i]);
   }
   free(gs->loop_tracks);
