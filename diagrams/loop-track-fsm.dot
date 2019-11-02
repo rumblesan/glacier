@@ -29,7 +29,7 @@ digraph G {
 
   Playing -> Stopped [ label="Playback\nAction" ];
   Playing -> overdubActive [ label="Record\nAction" ];
-  overdubActive -> Armed [ label="no" ];
+  overdubActive -> Recording [ label="no" ];
   overdubActive -> Overdubbing [ label="yes" ];
 
   Overdubbing -> Stopped [ label="Playback\nAction" ];
