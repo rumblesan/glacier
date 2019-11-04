@@ -5,27 +5,13 @@
 
 #include "core/types.h"
 #include "core/loop_track.h"
+#include "core/sync_timing_message.h"
 
 typedef enum sync_control_state {
   SyncControl_State_Empty,
   SyncControl_State_Running,
   SyncControl_State_Stopped,
 } SyncControlState;
-
-typedef enum sync_control_interval {
-  SyncControl_Interval_Whole,
-  SyncControl_Interval_Half,
-  SyncControl_Interval_Quarter,
-  SyncControl_Interval_None,
-} SyncControlInterval;
-
-typedef struct SyncTimingMessage {
-
-  SyncControlInterval interval;
-
-  unsigned int offset;
-
-} SyncTimingMessage;
 
 typedef struct SyncControl {
 
