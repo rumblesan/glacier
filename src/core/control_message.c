@@ -4,12 +4,13 @@
 #include "dbg.h"
 
 #include "core/control_message.h"
+#include "core/loop_track.h"
 
-ControlMessage *cm_create(int buffer_number, enum buffer_command cmd) {
+ControlMessage *cm_create(int track_number, LoopTrackAction action) {
   ControlMessage *cm = malloc(sizeof(ControlMessage));
   check_mem(cm);
-  cm->cmd = cmd;
-  cm->buffer_number = buffer_number;
+  cm->action = action;
+  cm->track_number = track_number;
 
   return cm;
 error:

@@ -1,14 +1,14 @@
 #ifndef __GLACIER_CONTROL_MESSAGE__
 #define __GLACIER_CONTROL_MESSAGE__
 
-enum buffer_command { StartRecording, StopRecording, StartPlayback, StopPlayback, PausePlayback };
+#include "core/loop_track.h"
 
 typedef struct ControlMessage {
-  int buffer_number;
-  enum buffer_command cmd;
+  int track_number;
+  LoopTrackAction action;
 } ControlMessage;
 
-ControlMessage *cm_create(int buffer_number, enum buffer_command cmd);
+ControlMessage *cm_create(int track_number, LoopTrackAction action);
 
 void cm_destroy(ControlMessage *cm);
 
