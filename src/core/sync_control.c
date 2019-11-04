@@ -6,6 +6,7 @@
 
 #include "core/sync_control.h"
 #include "core/loop_track.h"
+#include "core/sync_timing_message.h"
 
 SyncControl *sc_create(LoopTrack **loop_tracks, unsigned int track_count) {
   SyncControl *sc = malloc(sizeof(SyncControl));
@@ -118,19 +119,19 @@ SyncTimingMessage sc_keep_sync(SyncControl *sc, unsigned int count_increase) {
 
   if (sc->sync_count < sc->sync_length && new_count >= sc->sync_length) {
     interval = SyncControl_Interval_Whole;
-    offset = new_count - sc->sync_length;
-    sc->sync_count = offset;
+    offset = sc->sync_length - sc->sync_count;
+    sc->sync_count = new_count - sc->sync_length;
   } else if (sc->sync_count < sc->three_quarter_length && new_count >= sc->three_quarter_length) {
     interval = SyncControl_Interval_Quarter;
-    offset = new_count - sc->three_quarter_length;
+    offset = sc->three_quarter_length - sc->sync_count;
     sc->sync_count = new_count;
   } else if (sc->sync_count < sc->half_length && new_count >= sc->half_length) {
     interval = SyncControl_Interval_Half;
-    offset = new_count - sc->half_length;
+    offset = sc->half_length - sc->sync_count;
     sc->sync_count = new_count;
   } else if (sc->sync_count < sc->quarter_length && new_count >= sc->quarter_length) {
     interval = SyncControl_Interval_Quarter;
-    offset = new_count - sc->quarter_length;
+    offset = sc->quarter_length - sc->sync_count;
     sc->sync_count = new_count;
   } else {
     sc->sync_count = new_count;

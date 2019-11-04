@@ -66,11 +66,11 @@ char *test_syncing() {
 
   SyncTimingMessage timing2 = sc_keep_sync(sc, 20);
   mu_assert(timing2.interval == SyncControl_Interval_Quarter, "Sync Control should send quarter sync");
-  mu_assert(timing2.offset == 15, "Sync Control should have an offset of 15");
+  mu_assert(timing2.offset == 5, "Sync Control should have an offset of 5");
 
   SyncTimingMessage timing3 = sc_keep_sync(sc, 25);
   mu_assert(timing3.interval == SyncControl_Interval_Half, "Sync Control should send half sync");
-  mu_assert(timing3.offset == 15, "Sync Control should have an offset of 15");
+  mu_assert(timing3.offset == 10, "Sync Control should have an offset of 10");
 
   SyncTimingMessage timing4 = sc_keep_sync(sc, 5);
   mu_assert(timing4.interval == SyncControl_Interval_None, "Sync Control shouldn't sync");
@@ -78,7 +78,7 @@ char *test_syncing() {
 
   SyncTimingMessage timing5 = sc_keep_sync(sc, 20);
   mu_assert(timing5.interval == SyncControl_Interval_Quarter, "Sync Control should send quarter sync");
-  mu_assert(timing5.offset == 15, "Sync Control should have an offset of 15");
+  mu_assert(timing5.offset == 5, "Sync Control should have an offset of 5");
 
   SyncTimingMessage timing6 = sc_keep_sync(sc, 7);
   mu_assert(timing6.interval == SyncControl_Interval_None, "Sync Control shouldn't sync here");
@@ -86,7 +86,7 @@ char *test_syncing() {
 
   SyncTimingMessage timing7 = sc_keep_sync(sc, 20);
   mu_assert(timing7.interval == SyncControl_Interval_Whole, "Sync Control send whole sync");
-  mu_assert(timing7.offset == 17, "Sync Control should have an offset of 17");
+  mu_assert(timing7.offset == 3, "Sync Control should have an offset of 3");
 
   _cleanup(sc, track_count, buffers, loop_tracks);
 
