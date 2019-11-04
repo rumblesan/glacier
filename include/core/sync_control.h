@@ -32,6 +32,8 @@ typedef struct SyncControl {
 
 SyncControl *sc_create(LoopTrack **loop_tracks, unsigned int track_count);
 
+SyncControlState sc_check_track_state(SyncControl *sc, LoopTrackState lts, unsigned int record_length);
+
 SyncControlState sc_buffer_recorded(SyncControl *sc, unsigned int record_length);
 
 SyncControlState sc_buffer_stopped(SyncControl *sc);
