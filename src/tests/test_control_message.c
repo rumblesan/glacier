@@ -1,16 +1,17 @@
 #include "tests/minunit.h"
 
 #include "core/control_message.h"
+#include "core/loop_track.h"
 
 char *test_control_message_create() {
 
-  int buffer_number = 1;
-  enum buffer_command cmd = StartRecording;
+  int track_number = 1;
+  LoopTrackAction action = LoopTrack_Action_Record;
 
-  ControlMessage *cm = cm_create(buffer_number, cmd);
+  ControlMessage *cm = cm_create(track_number, action);
   mu_assert(cm != NULL, "Could not create Control Message");
-  mu_assert(cm->buffer_number == buffer_number, "Incorrect buffer number");
-  mu_assert(cm->cmd == cmd, "Incorrect command");
+  mu_assert(cm->track_number == track_number, "Incorrect buffer number");
+  mu_assert(cm->action == action, "Incorrect action");
 
   cm_destroy(cm);
   return NULL;
