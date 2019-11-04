@@ -2,6 +2,7 @@
 #define __GLACIER_LOOP_TRACK__
 
 #include "core/types.h"
+#include "core/sync_timing_message.h"
 #include "core/audio_buffer.h"
 
 typedef enum loop_track_action {
@@ -41,9 +42,9 @@ bool lt_is_playing(LoopTrack *lc);
 
 bool lt_is_empty(LoopTrack *lc);
 
-void lt_handle_audio(LoopTrack *lc, const SAMPLE *input_samples, unsigned long sample_count);
+unsigned int lt_recorded_length(LoopTrack *lc);
 
-void lt_playback_mix(LoopTrack *lc, SAMPLE *output_samples, unsigned long sample_count);
+LoopTrackState lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long sample_count);
 
 void lt_destroy(LoopTrack *lc);
 
