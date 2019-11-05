@@ -27,6 +27,18 @@ error:
   return NULL;
 }
 
+void ab_finish_recording(AudioBuffer *ab) {
+  ab->length = ab->record_head_pos;
+  ab->record_head_pos = 0;
+  ab->playback_head_pos = 0;
+}
+
+void ab_cancel_recording(AudioBuffer *ab) {
+  ab->length = 0;
+  ab->record_head_pos = 0;
+  ab->playback_head_pos = 0;
+}
+
 bool ab_record(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long frame_count) {
 
   int sample_count = frame_count * ab->channels;
@@ -40,6 +52,10 @@ bool ab_record(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long frame
   int bytes = sample_count * sizeof(SAMPLE);
   memcpy(ab->samples + ab->record_head_pos, input_samples, bytes);
   ab->record_head_pos += sample_count;
+
+  if (!still_recording) {
+    ab_finish_recording(ab);
+  }
 
   return still_recording;
 }
