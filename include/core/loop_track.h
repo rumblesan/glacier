@@ -44,7 +44,9 @@ bool lt_is_empty(LoopTrack *lc);
 
 unsigned int lt_recorded_length(LoopTrack *lc);
 
-LoopTrackState lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long sample_count);
+unsigned int lt_playback_length(LoopTrack *lc);
+
+LoopTrackState lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long frame_count);
 
 void lt_destroy(LoopTrack *lc);
 
