@@ -9,6 +9,8 @@
 #include "core/sync_control.h"
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
+#include "core/control_message.h"
+#include "core/sync_timing_message.h"
 
 GlacierAppState *glacier_create(int track_count, unsigned int max_buffer_length, int channels) {
 
@@ -50,6 +52,16 @@ error:
   return NULL;
 }
 
+void glacier_handle_command(GlacierAppState *glacier, ControlMessage *msg) {
+  int track_number = msg->track_number;
+  if (track_number >= 0 && track_number < glacier->track_count) {
+    lt_handle_action(glacier->loop_tracks[track_number], msg->action);
+  }
+}
+
+void glacier_handle_audio(GlacierAppState *glacier, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long frame_count) {
+  printf("UNFINISHED\n");
+}
 
 void glacier_destroy(GlacierAppState *gs) {
   check(gs != NULL, "Invalid Glacier State");
