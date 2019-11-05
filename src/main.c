@@ -5,8 +5,9 @@
 #include "dbg.h"
 
 #include "core/types.h"
-#include "core/state.h"
+#include "core/glacier.h"
 #include "core/control_message.h"
+#include "core/loop_track.h"
 
 #define SAMPLE_RATE         (48000)
 #define PA_SAMPLE_TYPE      paFloat32
@@ -23,7 +24,7 @@ static int glacierAudioCB(
 ) {
   SAMPLE *out = (SAMPLE*)outputBuffer;
   const SAMPLE *in = (const SAMPLE*)inputBuffer;
-  GlacierState *gs = (GlacierState*)userData;
+  GlacierAppState *glacier = (GlacierAppState*)userData;
 
   (void) timeInfo;
   (void) statusFlags;
@@ -34,48 +35,32 @@ static int glacierAudioCB(
 
   while (
     ck_ring_dequeue_spsc(
-      gs->control_bus,
-      gs->control_bus_buffer,
+      glacier->control_bus,
+      glacier->control_bus_buffer,
       &new_control_message
     ) == true
   ) {
-    int buff_num = new_control_message->buffer_number;
-    enum buffer_command cmd = new_control_message->cmd;
-    printf("received message %d for buffer %d\n", cmd, buff_num);
-    switch (cmd) {
-      case StartRecording:
-        printf("Starting recording on %d\n", buff_num);
-        ab_start_recording(gs->buffers[buff_num]);
-        printf("recording status: %d\n", gs->buffers[buff_num]->recording);
-        break;
-      case StopRecording:
-        printf("Stopping recording on %d\n", buff_num);
-        ab_stop_recording(gs->buffers[buff_num]);
-        printf("recording status: %d\n", gs->buffers[buff_num]->recording);
-        break;
-      default:
-        printf("unknown command: %d %d\n", buff_num, cmd);
-    }
+    int track_number = new_control_message->track_number;
+    LoopTrackAction action = new_control_message->action;
+    printf("received message %d for buffer %d\n", action, track_number);
+    glacier_handle_command(
+      glacier,
+      new_control_message
+    );
   }
-  for (int i = 0; i < gs->buffer_count; i++) {
-    if (gs->buffers[i]->recording) {
-      ab_record(gs->buffers[i], in, framesPerBuffer);
-    } else if (gs->buffers[i]->length > 0) {
-      ab_playback_mix(gs->buffers[i], out, framesPerBuffer);
-    }
-  }
+  glacier_handle_audio(glacier, in, out, framesPerBuffer);
 
   return paContinue;
 }
 
 
-int app_loop(GlacierState *gs) {
+int input_handler(GlacierAppState *glacier) {
   printf("Hit ENTER to stop program.\n");
   int buffer_num;
   char command;
   while (1) {
     scanf("%d%c", &buffer_num, &command);
-    if (buffer_num > gs->buffer_count) {
+    if (buffer_num > glacier->track_count) {
       printf("%d is not a valid buffer number\n", buffer_num);
       continue;
     }
@@ -87,9 +72,9 @@ int app_loop(GlacierState *gs) {
         printf("starting recording in buffer %d\n", buffer_num);
         if (
             ck_ring_enqueue_spsc(
-              gs->control_bus,
-              gs->control_bus_buffer,
-              cm_create(buffer_num - 1, StartRecording)
+              glacier->control_bus,
+              glacier->control_bus_buffer,
+              cm_create(buffer_num - 1, LoopTrack_Action_Record)
               ) == false
            ) {
           printf("Could not send message to audio thread\n");
@@ -99,9 +84,9 @@ int app_loop(GlacierState *gs) {
         printf("stopping recording in buffer %d\n", buffer_num);
         if (
             ck_ring_enqueue_spsc(
-              gs->control_bus,
-              gs->control_bus_buffer,
-              cm_create(buffer_num - 1, StopRecording)
+              glacier->control_bus,
+              glacier->control_bus_buffer,
+              cm_create(buffer_num - 1, LoopTrack_Action_Playback)
               ) == false
            ) {
           printf("Could not send message to audio thread\n");
@@ -141,7 +126,7 @@ int main(void) {
   int record_buffer_length = 3;
   int record_buffer_channels = 2;
 
-  GlacierState *app_state = gs_create(
+  GlacierAppState *glacier = glacier_create(
     record_buffer_count,
     record_buffer_length * SAMPLE_RATE,
     record_buffer_channels
@@ -155,14 +140,14 @@ int main(void) {
     FRAMES_PER_BUFFER,
     0,
     glacierAudioCB,
-    app_state
+    glacier
   );
   check(err == paNoError, "could not open stream");
 
   err = Pa_StartStream( stream );
   check(err == paNoError, "could not start stream");
 
-  app_loop(app_state);
+  input_handler(glacier);
 
   err = Pa_CloseStream( stream );
   check(err == paNoError, "could not close stream");
