@@ -1,5 +1,4 @@
-#ifndef __GLACIER_SYNC_TIMING_MESSAGE__
-#define __GLACIER_SYNC_TIMING_MESSAGE__
+#pragma once
 
 typedef enum sync_control_interval {
   SyncControl_Interval_Whole,
@@ -15,5 +14,3 @@ typedef struct SyncTimingMessage {
   unsigned int offset;
 
 } SyncTimingMessage;
-
-#endif

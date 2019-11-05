@@ -1,5 +1,4 @@
-#ifndef __GLACIER_LOOP_TRACK__
-#define __GLACIER_LOOP_TRACK__
+#pragma once
 
 #include "core/types.h"
 #include "core/sync_timing_message.h"
@@ -49,5 +48,3 @@ unsigned int lt_playback_length(LoopTrack *lc);
 LoopTrackState lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long frame_count);
 
 void lt_destroy(LoopTrack *lc);
-
-#endif

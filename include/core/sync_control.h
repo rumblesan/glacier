@@ -1,5 +1,4 @@
-#ifndef __GLACIER_SYNC_CONTROL_FSM__
-#define __GLACIER_SYNC_CONTROL_FSM__
+#pragma once
 
 #include <stdbool.h>
 
@@ -45,5 +44,3 @@ SyncTimingMessage sc_keep_sync(SyncControl *sc, unsigned int count_increase);
 bool sc_is_syncing(SyncControl *sc);
 
 void sc_destroy(SyncControl *abc);
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __GLACIER_AUDIO_BUFFER__
-#define __GLACIER_AUDIO_BUFFER__
+#pragma once
 
 #include <stdbool.h>
 
@@ -30,5 +29,3 @@ bool ab_overdub(AudioBuffer *ab, const SAMPLE *input_samples, unsigned long samp
 void ab_playback_mix(AudioBuffer *ab, SAMPLE *output_samples, unsigned long sample_count);
 
 void ab_destroy(AudioBuffer *ab);
-
-#endif

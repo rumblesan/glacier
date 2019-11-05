@@ -1,10 +1,7 @@
 #include <stdio.h>
 
 #include "tests/minunit.h"
-#include "tests/test_control_message.h"
-#include "tests/test_sync_control.h"
-#include "tests/test_loop_track.h"
-#include "tests/test_glacier_app.h"
+#include "tests/test_all.h"
 
 int tests_run;
 

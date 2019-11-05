@@ -1,5 +1,4 @@
-#ifndef __GLACIER_APP__
-#define __GLACIER_APP__
+#pragma once
 
 #include "ck_ring.h"
 
@@ -30,5 +29,3 @@ void glacier_handle_command(GlacierAppState *glacier, ControlMessage *msg);
 void glacier_handle_audio(GlacierAppState *gs, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long frame_count);
 
 void glacier_destroy(GlacierAppState *glacier);
-
-#endif
