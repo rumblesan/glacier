@@ -27,4 +27,4 @@
     exit(result != 0);\
 }
 
-int tests_run;
+uint8_t tests_run;

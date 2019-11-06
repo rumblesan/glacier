@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 typedef enum sync_control_interval {
   SyncControl_Interval_Whole,
   SyncControl_Interval_Half,
@@ -11,6 +13,6 @@ typedef struct SyncTimingMessage {
 
   SyncControlInterval interval;
 
-  unsigned int offset;
+  uint32_t offset;
 
 } SyncTimingMessage;

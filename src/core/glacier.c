@@ -1,5 +1,7 @@
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <stdint.h>
+
 #include "ck_ring.h"
 
 #include "dbg.h"
@@ -12,7 +14,7 @@
 #include "core/control_message.h"
 #include "core/sync_timing_message.h"
 
-GlacierAppState *glacier_create(int track_count, unsigned int max_buffer_length, int channels) {
+GlacierAppState *glacier_create(uint8_t track_count, uint32_t max_buffer_length, uint8_t channels) {
 
   GlacierAppState *gs = malloc(sizeof(GlacierAppState));
   check_mem(gs);
@@ -20,7 +22,7 @@ GlacierAppState *glacier_create(int track_count, unsigned int max_buffer_length,
   gs->track_count = track_count;
   gs->channels = channels;
 
-  int control_bus_size = 1024;
+  uint16_t control_bus_size = 1024;
   gs->control_bus = malloc(sizeof(ck_ring_t));
   check_mem(gs->control_bus);
 
@@ -33,13 +35,13 @@ GlacierAppState *glacier_create(int track_count, unsigned int max_buffer_length,
 
   gs->buffers = malloc(sizeof(AudioBuffer*) * track_count);
   check_mem(gs->buffers);
-  for (int i = 0; i < track_count; i++) {
+  for (uint8_t i = 0; i < track_count; i++) {
     gs->buffers[i] = ab_create(max_buffer_length, channels);
     check_mem(gs->buffers[i]);
   }
   gs->loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
   check_mem(gs->loop_tracks);
-  for (int i = 0; i < track_count; i++) {
+  for (uint8_t i = 0; i < track_count; i++) {
     gs->loop_tracks[i] = lt_create(i, gs->buffers[i]);
     check_mem(gs->loop_tracks[i]);
   }
@@ -53,13 +55,13 @@ error:
 }
 
 void glacier_handle_command(GlacierAppState *glacier, ControlMessage *msg) {
-  int track_number = msg->track_number;
+  uint8_t track_number = msg->track_number;
   if (track_number >= 0 && track_number < glacier->track_count) {
     lt_handle_action(glacier->loop_tracks[track_number], msg->action);
   }
 }
 
-void glacier_handle_audio(GlacierAppState *glacier, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long frame_count) {
+void glacier_handle_audio(GlacierAppState *glacier, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count) {
   printf("UNFINISHED\n");
 }
 
@@ -67,7 +69,7 @@ void glacier_destroy(GlacierAppState *gs) {
   check(gs != NULL, "Invalid Glacier State");
 
   check(gs->loop_tracks != NULL, "Invalid Glacier State buffer control list");
-  for (int i = 0; i < gs->track_count; i++) {
+  for (uint8_t i = 0; i < gs->track_count; i++) {
     lt_destroy(gs->loop_tracks[i]);
   }
   free(gs->loop_tracks);

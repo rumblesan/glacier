@@ -1,13 +1,15 @@
+#include <stdint.h>
+
 #include "tests/minunit.h"
 
 #include "core/sync_control.h"
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
-void _cleanup(SyncControl *sc, int track_count, AudioBuffer **buffers, LoopTrack **loop_tracks) {
+void _cleanup(SyncControl *sc, uint8_t track_count, AudioBuffer **buffers, LoopTrack **loop_tracks) {
   sc_destroy(sc);
 
-  for (int i = 0; i < track_count; i++) {
+  for (uint8_t i = 0; i < track_count; i++) {
     lt_destroy(loop_tracks[i]);
   }
   free(loop_tracks);
@@ -19,14 +21,14 @@ void _cleanup(SyncControl *sc, int track_count, AudioBuffer **buffers, LoopTrack
 
 char *test_sync_control_create() {
 
-  int track_count = 3;
+  uint8_t track_count = 3;
   AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * track_count);
-  for (int i = 0; i < track_count; i++) {
+  for (uint8_t i = 0; i < track_count; i++) {
     buffers[i] = ab_create(1024, 2);
   }
 
   LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
-  for (int i = 0; i < track_count; i++) {
+  for (uint8_t i = 0; i < track_count; i++) {
     loop_tracks[i] = lt_create(i, buffers[i]);
   }
 
@@ -41,14 +43,14 @@ char *test_sync_control_create() {
 }
 
 char *test_syncing() {
-  int track_count = 3;
+  uint8_t track_count = 3;
   AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * track_count);
-  for (int i = 0; i < track_count; i++) {
+  for (uint8_t i = 0; i < track_count; i++) {
     buffers[i] = ab_create(1024, 2);
   }
 
   LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
-  for (int i = 0; i < track_count; i++) {
+  for (uint8_t i = 0; i < track_count; i++) {
     loop_tracks[i] = lt_create(i, buffers[i]);
   }
 
@@ -56,7 +58,7 @@ char *test_syncing() {
   mu_assert(sc != NULL, "Could not create Sync Control");
 
 
-  unsigned int recorded_length = 100;
+  uint32_t recorded_length = 100;
   buffers[0]->length = recorded_length;
   SyncControlState after_start = sc_buffer_recorded(sc, recorded_length);
   mu_assert(after_start == SyncControl_State_Running, "Sync Control should be running");

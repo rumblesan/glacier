@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include <math.h>
+#include <stdlib.h>
+#include <inttypes.h>
+
 #include "portaudio.h"
 
 #include "dbg.h"
@@ -40,7 +41,7 @@ static int glacierAudioCB(
       &new_control_message
     ) == true
   ) {
-    int track_number = new_control_message->track_number;
+    uint8_t track_number = new_control_message->track_number;
     LoopTrackAction action = new_control_message->action;
     printf("received message %d for buffer %d\n", action, track_number);
     glacier_handle_command(
@@ -54,22 +55,22 @@ static int glacierAudioCB(
 }
 
 
-int input_handler(GlacierAppState *glacier) {
+void input_handler(GlacierAppState *glacier) {
   printf("Hit ENTER to stop program.\n");
-  int buffer_num;
+  uint8_t buffer_num;
   char command;
   while (1) {
-    scanf("%d%c", &buffer_num, &command);
+    scanf("%" SCNu8 "%c", &buffer_num, &command);
     if (buffer_num > glacier->track_count) {
-      printf("%d is not a valid buffer number\n", buffer_num);
+      printf("%" PRIu8 " is not a valid buffer number\n", buffer_num);
       continue;
     }
     switch (command) {
       case 'q':
         printf("quitting\n");
-        return 0;
+        return;
       case 'r':
-        printf("starting recording in buffer %d\n", buffer_num);
+        printf("starting recording in buffer %" PRIu8 "\n", buffer_num);
         if (
             ck_ring_enqueue_spsc(
               glacier->control_bus,
@@ -81,7 +82,7 @@ int input_handler(GlacierAppState *glacier) {
         }
         break;
       case 's':
-        printf("stopping recording in buffer %d\n", buffer_num);
+        printf("stopping recording in buffer %" PRIu8 "\n", buffer_num);
         if (
             ck_ring_enqueue_spsc(
               glacier->control_bus,
@@ -122,9 +123,9 @@ int main(void) {
   outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
   outputParameters.hostApiSpecificStreamInfo = NULL;
 
-  int record_buffer_count = 3;
-  int record_buffer_length = 3;
-  int record_buffer_channels = 2;
+  uint8_t record_buffer_count = 3;
+  uint32_t record_buffer_length = 3;
+  uint8_t record_buffer_channels = 2;
 
   GlacierAppState *glacier = glacier_create(
     record_buffer_count,

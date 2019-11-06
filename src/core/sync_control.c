@@ -1,5 +1,6 @@
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 #include "dbg.h"
@@ -8,7 +9,7 @@
 #include "core/loop_track.h"
 #include "core/sync_timing_message.h"
 
-SyncControl *sc_create(LoopTrack **loop_tracks, unsigned int track_count) {
+SyncControl *sc_create(LoopTrack **loop_tracks, uint8_t track_count) {
   SyncControl *sc = malloc(sizeof(SyncControl));
   check_mem(sc);
 
@@ -28,7 +29,7 @@ error:
   return NULL;
 }
 
-SyncControlState sc_buffer_recorded(SyncControl *sc, unsigned int record_length) {
+SyncControlState sc_buffer_recorded(SyncControl *sc, uint32_t record_length) {
   switch (sc->state) {
     case SyncControl_State_Empty:
       sc->state = SyncControl_State_Running;
@@ -50,13 +51,13 @@ SyncControlState sc_buffer_recorded(SyncControl *sc, unsigned int record_length)
 }
 
 SyncControlState sc_buffer_stopped(SyncControl *sc) {
-  int running_loop_tracks = 0;
+  uint8_t running_loop_tracks = 0;
   switch (sc->state) {
     case SyncControl_State_Empty:
       // TODO shouldn't occur, but maybe check?
       break;
     case SyncControl_State_Running:
-      for (int i = 0; i < sc->track_count; i++) {
+      for (uint8_t i = 0; i < sc->track_count; i++) {
         if (lt_is_playing(sc->loop_tracks[i])) {
           running_loop_tracks += 1;
         }
@@ -74,13 +75,13 @@ SyncControlState sc_buffer_stopped(SyncControl *sc) {
 }
 
 SyncControlState sc_buffer_cleared(SyncControl *sc) {
-  int empty_loop_tracks = 0;
+  uint8_t empty_loop_tracks = 0;
   switch (sc->state) {
     case SyncControl_State_Empty:
       // TODO shouldn't occur, but maybe check?
       break;
     case SyncControl_State_Running:
-      for (int i = 0; i < sc->track_count; i++) {
+      for (uint8_t i = 0; i < sc->track_count; i++) {
         if (lt_is_empty(sc->loop_tracks[i])) {
           empty_loop_tracks += 1;
         }
@@ -91,7 +92,7 @@ SyncControlState sc_buffer_cleared(SyncControl *sc) {
       // do nothing
       break;
     case SyncControl_State_Stopped:
-      for (int i = 0; i < sc->track_count; i++) {
+      for (uint8_t i = 0; i < sc->track_count; i++) {
         if (lt_is_empty(sc->loop_tracks[i])) {
           empty_loop_tracks += 1;
         }
@@ -105,7 +106,7 @@ SyncControlState sc_buffer_cleared(SyncControl *sc) {
   return sc->state;
 }
 
-SyncTimingMessage sc_keep_sync(SyncControl *sc, unsigned int count_increase) {
+SyncTimingMessage sc_keep_sync(SyncControl *sc, uint32_t count_increase) {
   if (!sc_is_syncing(sc)) {
     // If syncing isn't running then always return a sync message
     SyncTimingMessage sm = { SyncControl_Interval_Whole, 0 };
@@ -114,8 +115,8 @@ SyncTimingMessage sc_keep_sync(SyncControl *sc, unsigned int count_increase) {
 
   SyncTimingMessage sm = { SyncControl_Interval_None, 0 };
   SyncControlInterval interval = SyncControl_Interval_None;
-  unsigned int offset = 0;
-  unsigned int new_count = sc->sync_count + count_increase;
+  uint32_t offset = 0;
+  uint32_t new_count = sc->sync_count + count_increase;
 
   if (sc->sync_count < sc->sync_length && new_count >= sc->sync_length) {
     interval = SyncControl_Interval_Whole;

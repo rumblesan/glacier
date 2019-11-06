@@ -1,5 +1,6 @@
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 #include "dbg.h"
@@ -7,8 +8,8 @@
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
-LoopTrack *lt_create(unsigned int buffer_id, AudioBuffer *buffer) {
-  LoopTrack *lt = malloc(sizeof(LoopTrack));
+LoopTrack *lt_create(uint8_t buffer_id, AudioBuffer *buffer) {
+  LoopTrack *lt = calloc(1, sizeof(LoopTrack));
   check_mem(lt);
 
   lt->buffer_id = buffer_id;
@@ -187,15 +188,15 @@ bool lt_is_empty(LoopTrack *lt) {
   return lt->buffer->length <= 0;
 }
 
-unsigned int lt_recorded_length(LoopTrack *lc) {
+uint32_t lt_recorded_length(LoopTrack *lc) {
   return lc->buffer->length;
 }
 
-unsigned int lt_playback_length(LoopTrack *lc) {
+uint32_t lt_playback_length(LoopTrack *lc) {
   return lc->buffer->playback_head_pos;
 }
 
-void _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long frame_count) {
+void _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count) {
   if (lt->state != LoopTrack_State_Concluding) {
     return;
   }
@@ -210,7 +211,7 @@ void _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync_message, const 
   }
 }
 
-LoopTrackState lt_handle_audio(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long frame_count) {
+LoopTrackState lt_handle_audio(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count) {
   switch (lt->state) {
     case LoopTrack_State_Error:
       break;

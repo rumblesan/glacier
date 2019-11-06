@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #include "ck_ring.h"
 
 #include "core/types.h"
@@ -9,8 +11,8 @@
 #include "core/control_message.h"
 
 typedef struct GlacierAppState {
-  int track_count;
-  int channels;
+  uint8_t track_count;
+  uint8_t channels;
 
   ck_ring_buffer_t *control_bus_buffer;
   ck_ring_t *control_bus;
@@ -22,10 +24,10 @@ typedef struct GlacierAppState {
 
 } GlacierAppState;
 
-GlacierAppState *glacier_create(int track_count, unsigned int max_buffer_length, int channels);
+GlacierAppState *glacier_create(uint8_t track_count, uint32_t max_buffer_length, uint8_t channels);
 
 void glacier_handle_command(GlacierAppState *glacier, ControlMessage *msg);
 
-void glacier_handle_audio(GlacierAppState *gs, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long frame_count);
+void glacier_handle_audio(GlacierAppState *gs, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count);
 
 void glacier_destroy(GlacierAppState *glacier);

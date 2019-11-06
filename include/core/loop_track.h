@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "core/types.h"
 #include "core/sync_timing_message.h"
 #include "core/audio_buffer.h"
@@ -23,7 +26,7 @@ typedef enum loop_track_state {
 
 typedef struct LoopTrack {
 
-  unsigned int buffer_id;
+  uint8_t buffer_id;
 
   AudioBuffer *buffer;
 
@@ -33,7 +36,7 @@ typedef struct LoopTrack {
 
 } LoopTrack;
 
-LoopTrack *lt_create(unsigned int buffer_id, AudioBuffer *buffer);
+LoopTrack *lt_create(uint8_t buffer_id, AudioBuffer *buffer);
 
 LoopTrackState lt_handle_action(LoopTrack *lc, LoopTrackAction action);
 
@@ -41,10 +44,10 @@ bool lt_is_playing(LoopTrack *lc);
 
 bool lt_is_empty(LoopTrack *lc);
 
-unsigned int lt_recorded_length(LoopTrack *lc);
+uint32_t lt_recorded_length(LoopTrack *lc);
 
-unsigned int lt_playback_length(LoopTrack *lc);
+uint32_t lt_playback_length(LoopTrack *lc);
 
-LoopTrackState lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, unsigned long frame_count);
+LoopTrackState lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count);
 
 void lt_destroy(LoopTrack *lc);

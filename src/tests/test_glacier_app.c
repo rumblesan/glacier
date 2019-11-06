@@ -1,12 +1,14 @@
+#include <stdint.h>
+
 #include "tests/minunit.h"
 
 #include "core/glacier.h"
 
 char *test_glacier_app_create() {
 
-  int track_count = 3;
-  unsigned int max_buffer_length = 4000;
-  int channels = 2;
+  uint8_t track_count = 3;
+  uint32_t max_buffer_length = 4000;
+  uint8_t channels = 2;
   GlacierAppState *glacier = glacier_create(track_count, max_buffer_length, channels);
 
   glacier_destroy(glacier);

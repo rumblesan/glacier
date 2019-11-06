@@ -1,12 +1,13 @@
 #include <stdio.h>
+#include <stdint.h>
 
 #include "tests/minunit.h"
 #include "tests/test_all.h"
 
-int tests_run;
+uint8_t tests_run;
 
 typedef char* (test_suite_func)();
-int run_suite(test_suite_func suite, char *suite_name) {
+uint8_t run_suite(test_suite_func suite, char *suite_name) {
   printf("%s tests\n", suite_name);
   char *result = (*suite)();
   if (result != 0) {
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]) {
 
     tests_run = 0;
 
-    int result = 0;
+    uint8_t result = 0;
     result = result || run_suite(&test_control_message, "Control Message");
     result = result || run_suite(&test_sync_control, "Sync Control");
     result = result || run_suite(&test_loop_track, "Loop Track");

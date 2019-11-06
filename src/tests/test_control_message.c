@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #include "tests/minunit.h"
 
 #include "core/control_message.h"
@@ -5,7 +7,7 @@
 
 char *test_control_message_create() {
 
-  int track_number = 1;
+  uint8_t track_number = 1;
   LoopTrackAction action = LoopTrack_Action_Record;
 
   ControlMessage *cm = cm_create(track_number, action);
