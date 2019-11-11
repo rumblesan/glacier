@@ -196,22 +196,24 @@ uint32_t lt_playback_length(LoopTrack *lc) {
   return lc->buffer->playback_head_pos;
 }
 
-void _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count) {
+LoopTrackStateChange _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count) {
   if (lt->state != LoopTrack_State_Concluding) {
-    return;
+    return LoopTrack_Change_None;
   }
 
   if (sync_message.interval == SyncControl_Interval_None) {
     ab_record(lt->buffer, input_samples, frame_count);
+    return LoopTrack_Change_None;
   } else {
     ab_record(lt->buffer, input_samples, sync_message.offset);
     ab_finish_recording(lt->buffer);
     ab_playback_mix(lt->buffer, output_samples + sync_message.offset, frame_count - sync_message.offset);
     lt->state = LoopTrack_State_Playing;
+    return LoopTrack_Change_Finished_Recording;
   }
 }
 
-LoopTrackState lt_handle_audio(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count) {
+LoopTrackStateChange lt_handle_audio(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count) {
   switch (lt->state) {
     case LoopTrack_State_Error:
       break;
@@ -221,19 +223,21 @@ LoopTrackState lt_handle_audio(LoopTrack *lt, SyncTimingMessage sync_message, co
       if (sync_message.interval == SyncControl_Interval_Whole) {
         ab_record(lt->buffer, input_samples + sync_message.offset, frame_count - sync_message.offset);
         lt->state = LoopTrack_State_Recording;
+        return LoopTrack_Change_Started_Recording;
       }
       break;
     case LoopTrack_State_Cued:
       if (sync_message.interval != SyncControl_Interval_None) {
         ab_playback_mix(lt->buffer, output_samples + sync_message.offset, frame_count - sync_message.offset);
         lt->state = LoopTrack_State_Playing;
+        return LoopTrack_Change_Started_Playing;
       }
       break;
     case LoopTrack_State_Recording:
       ab_record(lt->buffer, input_samples, frame_count);
       break;
     case LoopTrack_State_Concluding:
-      _lt_handle_concluding(lt, sync_message, input_samples, output_samples, frame_count);
+      return _lt_handle_concluding(lt, sync_message, input_samples, output_samples, frame_count);
       break;
     case LoopTrack_State_Playing:
       ab_playback_mix(lt->buffer, output_samples, frame_count);
@@ -244,7 +248,7 @@ LoopTrackState lt_handle_audio(LoopTrack *lt, SyncTimingMessage sync_message, co
     default:
       break;
   }
-  return lt->state;
+  return LoopTrack_Change_None;
 }
 
 void lt_destroy(LoopTrack *lt) {

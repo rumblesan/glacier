@@ -24,6 +24,16 @@ typedef enum loop_track_state {
   LoopTrack_State_Overdubbing,
 } LoopTrackState;
 
+typedef enum loop_track_state_change {
+  LoopTrack_Change_None,
+  LoopTrack_Change_Started_Playing,
+  LoopTrack_Change_Started_Recording,
+  LoopTrack_Change_Finished_Recording,
+  LoopTrack_Change_Stopped,
+  LoopTrack_Change_Started,
+  LoopTrack_Change_Cleared,
+} LoopTrackStateChange;
+
 typedef struct LoopTrack {
 
   uint8_t buffer_id;
@@ -48,6 +58,6 @@ uint32_t lt_recorded_length(LoopTrack *lc);
 
 uint32_t lt_playback_length(LoopTrack *lc);
 
-LoopTrackState lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count);
+LoopTrackStateChange lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count);
 
 void lt_destroy(LoopTrack *lc);

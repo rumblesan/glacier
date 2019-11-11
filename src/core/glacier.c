@@ -62,7 +62,11 @@ void glacier_handle_command(GlacierAppState *glacier, ControlMessage *msg) {
 }
 
 void glacier_handle_audio(GlacierAppState *glacier, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count) {
-  printf("UNFINISHED\n");
+  SyncTimingMessage sync_timer = sc_keep_sync(glacier->syncer, frame_count);
+  for (uint8_t i = 0; i < glacier->track_count; i++) {
+    LoopTrackStateChange state_change = lt_handle_audio(glacier->loop_tracks[i], sync_timer, input_samples, output_samples, frame_count);
+    sc_handle_track_change(glacier->syncer, state_change, glacier->loop_tracks[i]);
+  }
 }
 
 void glacier_destroy(GlacierAppState *gs) {

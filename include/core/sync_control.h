@@ -32,15 +32,9 @@ typedef struct SyncControl {
 
 SyncControl *sc_create(LoopTrack **loop_tracks, uint8_t track_count);
 
-SyncControlState sc_check_track_state(SyncControl *sc, LoopTrackState lts, uint32_t record_length);
-
-SyncControlState sc_buffer_recorded(SyncControl *sc, uint32_t record_length);
-
-SyncControlState sc_buffer_stopped(SyncControl *sc);
-
-SyncControlState sc_buffer_cleared(SyncControl *sc);
-
 SyncTimingMessage sc_keep_sync(SyncControl *sc, uint32_t count_increase);
+
+SyncControlState sc_handle_track_change(SyncControl *sc, LoopTrackStateChange track_change, LoopTrack *track);
 
 bool sc_is_syncing(SyncControl *sc);
 

@@ -57,17 +57,18 @@ char *test_syncing() {
   SyncControl *sc = sc_create(loop_tracks, track_count);
   mu_assert(sc != NULL, "Could not create Sync Control");
 
-
   uint32_t recorded_length = 100;
   buffers[0]->length = recorded_length;
-  SyncControlState after_start = sc_buffer_recorded(sc, recorded_length);
+  SyncControlState after_start = sc_handle_track_change(sc, LoopTrack_Change_Finished_Recording, loop_tracks[0]);
+
   mu_assert(after_start == SyncControl_State_Running, "Sync Control should be running");
+  mu_assert(sc->sync_length == recorded_length, "Sync Control should have recorded %d samples not %d", recorded_length, sc->sync_length);
 
   SyncTimingMessage timing1 = sc_keep_sync(sc, 20);
   mu_assert(timing1.interval == SyncControl_Interval_None, "Sync Control shouldn't sync yet");
 
   SyncTimingMessage timing2 = sc_keep_sync(sc, 20);
-  mu_assert(timing2.interval == SyncControl_Interval_Quarter, "Sync Control should send quarter sync");
+  mu_assert(timing2.interval == SyncControl_Interval_Quarter, "Sync Control should send quarter sync, not %d", timing2.interval);
   mu_assert(timing2.offset == 5, "Sync Control should have an offset of 5");
 
   SyncTimingMessage timing3 = sc_keep_sync(sc, 25);

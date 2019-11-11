@@ -29,23 +29,58 @@ error:
   return NULL;
 }
 
-SyncControlState sc_buffer_recorded(SyncControl *sc, uint32_t record_length) {
+SyncTimingMessage sc_keep_sync(SyncControl *sc, uint32_t count_increase) {
+  if (!sc_is_syncing(sc)) {
+    // If syncing isn't running then always return a sync message
+    SyncTimingMessage sm = { SyncControl_Interval_Whole, 0 };
+    return sm;
+  }
+
+  SyncTimingMessage sm = { SyncControl_Interval_None, 0 };
+  SyncControlInterval interval = SyncControl_Interval_None;
+  uint32_t offset = 0;
+  uint32_t new_count = sc->sync_count + count_increase;
+
+  if (sc->sync_count < sc->sync_length && new_count >= sc->sync_length) {
+    interval = SyncControl_Interval_Whole;
+    offset = sc->sync_length - sc->sync_count;
+    sc->sync_count = new_count - sc->sync_length;
+  } else if (sc->sync_count < sc->three_quarter_length && new_count >= sc->three_quarter_length) {
+    interval = SyncControl_Interval_Quarter;
+    offset = sc->three_quarter_length - sc->sync_count;
+    sc->sync_count = new_count;
+  } else if (sc->sync_count < sc->half_length && new_count >= sc->half_length) {
+    interval = SyncControl_Interval_Half;
+    offset = sc->half_length - sc->sync_count;
+    sc->sync_count = new_count;
+  } else if (sc->sync_count < sc->quarter_length && new_count >= sc->quarter_length) {
+    interval = SyncControl_Interval_Quarter;
+    offset = sc->quarter_length - sc->sync_count;
+    sc->sync_count = new_count;
+  } else {
+    sc->sync_count = new_count;
+  }
+
+  sm.interval = interval;
+  sm.offset = offset;
+  return sm;
+}
+
+void _sc_calculate_sync_lengths(SyncControl *sc, uint32_t recorded_length) {
+  printf("calculating sync lengths from %d\n", recorded_length);
+  sc->sync_length = recorded_length;
+  sc->half_length = recorded_length / 2;
+  sc->quarter_length = sc->half_length / 2;
+  sc->three_quarter_length = sc->half_length + sc->quarter_length;
+}
+
+SyncControlState sc_handle_track_change(SyncControl *sc, LoopTrackStateChange track_change, LoopTrack *track) {
+  if (track_change == LoopTrack_Change_None) { return sc->state; }
   switch (sc->state) {
     case SyncControl_State_Empty:
       sc->state = SyncControl_State_Running;
-      if (sc->sync_length <= 0) {
-        sc->sync_length = record_length;
-        sc->half_length = record_length / 2;
-        sc->quarter_length = record_length / 4;
-        sc->three_quarter_length = sc->quarter_length + sc->half_length;
-      }
-      break;
-    case SyncControl_State_Running:
-      // do nothing
-      break;
-    case SyncControl_State_Stopped:
-      // TODO shouldn't occur, but maybe check?
-      break;
+      _sc_calculate_sync_lengths(sc, lt_recorded_length(track));
+    default: return sc->state;
   }
   return sc->state;
 }
@@ -104,43 +139,6 @@ SyncControlState sc_buffer_cleared(SyncControl *sc) {
       break;
   }
   return sc->state;
-}
-
-SyncTimingMessage sc_keep_sync(SyncControl *sc, uint32_t count_increase) {
-  if (!sc_is_syncing(sc)) {
-    // If syncing isn't running then always return a sync message
-    SyncTimingMessage sm = { SyncControl_Interval_Whole, 0 };
-    return sm;
-  }
-
-  SyncTimingMessage sm = { SyncControl_Interval_None, 0 };
-  SyncControlInterval interval = SyncControl_Interval_None;
-  uint32_t offset = 0;
-  uint32_t new_count = sc->sync_count + count_increase;
-
-  if (sc->sync_count < sc->sync_length && new_count >= sc->sync_length) {
-    interval = SyncControl_Interval_Whole;
-    offset = sc->sync_length - sc->sync_count;
-    sc->sync_count = new_count - sc->sync_length;
-  } else if (sc->sync_count < sc->three_quarter_length && new_count >= sc->three_quarter_length) {
-    interval = SyncControl_Interval_Quarter;
-    offset = sc->three_quarter_length - sc->sync_count;
-    sc->sync_count = new_count;
-  } else if (sc->sync_count < sc->half_length && new_count >= sc->half_length) {
-    interval = SyncControl_Interval_Half;
-    offset = sc->half_length - sc->sync_count;
-    sc->sync_count = new_count;
-  } else if (sc->sync_count < sc->quarter_length && new_count >= sc->quarter_length) {
-    interval = SyncControl_Interval_Quarter;
-    offset = sc->quarter_length - sc->sync_count;
-    sc->sync_count = new_count;
-  } else {
-    sc->sync_count = new_count;
-  }
-
-  sm.interval = interval;
-  sm.offset = offset;
-  return sm;
 }
 
 bool sc_is_syncing(SyncControl *sc) {
