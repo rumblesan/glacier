@@ -20,7 +20,7 @@ AudioBuffer *ab_create(uint32_t max_length, uint8_t channels) {
   ab->record_head_pos = 0;
   ab->length = 0;
 
-  ab->max_length = max_length * channels;
+  ab->max_length = max_length;
   ab->channels = channels;
 
   return ab;
@@ -42,17 +42,16 @@ void ab_cancel_recording(AudioBuffer *ab) {
 
 bool ab_record(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_count) {
 
-  uint32_t sample_count = frame_count * ab->channels;
   bool still_recording = true;
 
-  if (ab->record_head_pos + sample_count >= ab->max_length) {
+  if (ab->record_head_pos + frame_count >= ab->max_length) {
     still_recording = false;
-    sample_count = ab->max_length - ab->record_head_pos;
+    frame_count = ab->max_length - ab->record_head_pos;
   }
 
-  uint32_t bytes = sample_count * sizeof(SAMPLE);
-  memcpy(ab->samples + ab->record_head_pos, input_samples, bytes);
-  ab->record_head_pos += sample_count;
+  uint32_t bytes = frame_count * ab->channels * sizeof(SAMPLE);
+  memcpy(ab->samples + (ab->record_head_pos * ab->channels), input_samples, bytes);
+  ab->record_head_pos += frame_count;
 
   if (!still_recording) {
     ab_finish_recording(ab);
@@ -63,18 +62,19 @@ bool ab_record(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_coun
 
 bool ab_overdub(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_count) {
 
-  uint32_t sample_count = frame_count * ab->channels;
   bool still_recording = true;
 
-  if (ab->record_head_pos + sample_count >= ab->max_length) {
+  if (ab->record_head_pos + frame_count >= ab->max_length) {
     still_recording = false;
-    sample_count = ab->max_length - ab->record_head_pos;
+    frame_count = ab->max_length - ab->record_head_pos;
   }
 
+  uint32_t sample_count = frame_count * ab->channels;
+  uint32_t record_head_sample = ab->record_head_pos * ab->channels;
   for (uint32_t i = 0; i < sample_count; i++) {
-    ab->samples[ab->record_head_pos + i] += input_samples[i];
+    ab->samples[record_head_sample + i] += input_samples[i];
   }
-  ab->record_head_pos += sample_count;
+  ab->record_head_pos += frame_count;
 
   return still_recording;
 }
@@ -83,19 +83,21 @@ void ab_playback_mix(AudioBuffer *ab, SAMPLE *output_samples, uint32_t frame_cou
   if (ab->length <= 0) { return; }
 
   uint32_t sample_count = frame_count * ab->channels;
+  uint32_t playback_sample_pos = ab->playback_head_pos * ab->channels;
+  uint32_t sample_length = ab->length * ab->channels;
 
-  if (ab->playback_head_pos + sample_count >= ab->length) {
+  if (playback_sample_pos + sample_count >= sample_length) {
     uint32_t pos = 0;
     for (uint32_t i = 0; i < sample_count; i++) {
-      pos = (ab->playback_head_pos + i) % ab->length;
+      pos = (playback_sample_pos + i) % sample_length;
       output_samples[i] += ab->samples[pos];
     }
-    ab->playback_head_pos = (ab->playback_head_pos + sample_count) % ab->length;
+    ab->playback_head_pos = (ab->playback_head_pos + frame_count) % ab->length;
   } else {
     for (uint32_t i = 0; i < sample_count; i++) {
-      output_samples[i] += ab->samples[ab->playback_head_pos + i];
+      output_samples[i] += ab->samples[playback_sample_pos + i];
     }
-    ab->playback_head_pos += sample_count;
+    ab->playback_head_pos += frame_count;
   }
 }
 

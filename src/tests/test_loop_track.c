@@ -65,9 +65,9 @@ char *test_loop_track_state_changes() {
 
   mu_assert(lt_is_playing(loop_track), "Loop Track should be playing");
 
-  uint32_t expected_length = ((3 * frame_count) + sync_offset) * channels;
+  uint32_t expected_length = ((3 * frame_count) + sync_offset);
   uint32_t recorded_length = lt_recorded_length(loop_track);
-  uint32_t expected_playback = (frame_count - sync_offset) * channels;
+  uint32_t expected_playback = (frame_count - sync_offset);
   uint32_t playback_length = lt_playback_length(loop_track);
   mu_assert(recorded_length == expected_length, "Should have recorded %d not %d", expected_length, recorded_length)
   mu_assert(playback_length == expected_playback, "Should have played back %d not %d", expected_playback, playback_length)

@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     tests_run = 0;
 
     uint8_t result = 0;
+    result = result || run_suite(&test_audio_buffer, "Audio Buffer");
     result = result || run_suite(&test_control_message, "Control Message");
     result = result || run_suite(&test_sync_control, "Sync Control");
     result = result || run_suite(&test_loop_track, "Loop Track");
