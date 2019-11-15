@@ -78,8 +78,11 @@ SyncControlState sc_handle_track_change(SyncControl *sc, LoopTrackStateChange tr
   if (track_change == LoopTrack_Change_None) { return sc->state; }
   switch (sc->state) {
     case SyncControl_State_Empty:
-      sc->state = SyncControl_State_Running;
-      _sc_calculate_sync_lengths(sc, lt_recorded_length(track));
+      if (track_change == LoopTrack_Change_Finished_Recording) {
+        sc->state = SyncControl_State_Running;
+        _sc_calculate_sync_lengths(sc, lt_recorded_length(track));
+      }
+      break;
     default: return sc->state;
   }
   return sc->state;
