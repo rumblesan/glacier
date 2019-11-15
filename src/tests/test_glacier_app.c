@@ -38,7 +38,7 @@ char *test_glacier_startup() {
   glacier_handle_command(glacier, cm);
   mu_assert(glacier->syncer->state == SyncControl_State_Empty, "Syncer should be empty");
 
-  mu_assert(glacier->loop_tracks[0]->state == LoopTrack_State_Armed, "Loop track should be armed");
+  mu_assert(glacier->loop_tracks[0]->state == LoopTrack_State_Armed, "Loop track should be Armed");
   glacier_handle_audio(glacier, input_audio, output_audio, frame_count);
   frames_recorded += 1;
   mu_assert(glacier->loop_tracks[0]->state == LoopTrack_State_Recording, "Loop track should be recording");
@@ -67,11 +67,91 @@ char *test_glacier_startup() {
   return NULL;
 }
 
+char *test_glacier_multiple_track_record() {
+
+  uint8_t track_count = 3;
+  uint32_t max_buffer_length = 4000;
+  uint8_t channels = 2;
+  GlacierAppState *glacier = glacier_create(track_count, max_buffer_length, channels);
+
+  const SAMPLE *input_audio = calloc(3000 * channels, sizeof(SAMPLE));
+  SAMPLE *output_audio = calloc(3000 * channels, sizeof(SAMPLE));
+
+  mu_assert(glacier->syncer->state == SyncControl_State_Empty, "Syncer should be empty");
+
+  glacier_handle_audio(glacier, input_audio, output_audio, 100);
+  mu_assert(glacier->syncer->state == SyncControl_State_Empty, "Syncer should still be empty");
+
+  // Trigger recording on track 0
+  ControlMessage *cm = cm_create(0, LoopTrack_Action_Record);
+  glacier_handle_command(glacier, cm);
+  mu_assert(glacier->syncer->state == SyncControl_State_Empty, "Syncer should still be empty");
+  mu_assert(glacier->loop_tracks[0]->state == LoopTrack_State_Armed, "Loop track should be Armed");
+
+  glacier_handle_audio(glacier, input_audio, output_audio, 100);
+  mu_assert(glacier->loop_tracks[0]->state == LoopTrack_State_Recording, "Loop track should be recording");
+  glacier_handle_audio(glacier, input_audio, output_audio, 100);
+  glacier_handle_audio(glacier, input_audio, output_audio, 100);
+
+  // Trigger stopping recording on track 0
+  cm->track_number = 0;
+  cm->action = LoopTrack_Action_Record;
+  glacier_handle_command(glacier, cm);
+  mu_assert(glacier->loop_tracks[0]->state == LoopTrack_State_Concluding, "Loop track should be concluding");
+  mu_assert(glacier->syncer->state == SyncControl_State_Empty, "Syncer should still be empty");
+
+  glacier_handle_audio(glacier, input_audio, output_audio, 100);
+  mu_assert(glacier->loop_tracks[0]->state == LoopTrack_State_Playing, "Loop track should be playing");
+  mu_assert(glacier->syncer->state == SyncControl_State_Running, "Syncer should be running");
+  mu_assert(glacier->syncer->sync_length == 300, "Syncer should have a total length of %d not %d", 300, glacier->syncer->sync_length);
+  mu_assert(glacier->buffers[0]->length == 300, "Track 0 buffer should have a total length of %d not %d", 300, glacier->buffers[0]->length);
+  mu_assert(glacier->syncer->sync_count == 0, "Syncer should have a count of %d not %d", 0, glacier->syncer->sync_count);
+
+  // Let track 0 play a little
+  glacier_handle_audio(glacier, input_audio, output_audio, 100);
+  mu_assert(glacier->syncer->sync_count == 100, "Syncer should have a count of %d not %d", 100, glacier->syncer->sync_count);
+
+  // Trigger recording on track 1
+  cm->track_number = 1;
+  cm->action = LoopTrack_Action_Record;
+  glacier_handle_command(glacier, cm);
+  mu_assert(glacier->loop_tracks[1]->state == LoopTrack_State_Armed, "Loop track 1 should be Armed not %s", ltStates[glacier->loop_tracks[1]->state]);
+  glacier_handle_audio(glacier, input_audio, output_audio, 75);
+  mu_assert(glacier->loop_tracks[1]->state == LoopTrack_State_Armed, "Loop track 1 should still be Armed not %s", ltStates[glacier->loop_tracks[1]->state]);
+
+  // 25 samples past the sync point
+  glacier_handle_audio(glacier, input_audio, output_audio, 150);
+  mu_assert(glacier->syncer->sync_count == 25, "Syncer should have a count of %d not %d", 25, glacier->syncer->sync_count);
+  mu_assert(glacier->loop_tracks[1]->state == LoopTrack_State_Recording, "Loop track 1 should be Recording not %s", ltStates[glacier->loop_tracks[1]->state]);
+  mu_assert(glacier->loop_tracks[1]->buffer->record_head_pos == 25, "Loop track 1 record head pos should be 25");
+
+  glacier_handle_audio(glacier, input_audio, output_audio, 100);
+  mu_assert(glacier->syncer->sync_count == 125, "Syncer should have a count of %d not %d", 125, glacier->syncer->sync_count);
+  mu_assert(glacier->loop_tracks[1]->buffer->record_head_pos == 125, "Loop track 1 record head pos should be 125");
+
+  cm->track_number = 1;
+  cm->action = LoopTrack_Action_Record;
+  glacier_handle_command(glacier, cm);
+  mu_assert(glacier->loop_tracks[1]->state == LoopTrack_State_Concluding, "Loop track 1 should be Concluding not %s", ltStates[glacier->loop_tracks[1]->state]);
+
+  glacier_handle_audio(glacier, input_audio, output_audio, 50);
+  mu_assert(glacier->loop_tracks[1]->state == LoopTrack_State_Playing, "Loop track 1 should be Playing not %s", ltStates[glacier->loop_tracks[1]->state]);
+  mu_assert(glacier->loop_tracks[1]->buffer->playback_head_pos == 25, "Loop track 1 playback head pos should be 25");
+  mu_assert(glacier->buffers[1]->length == glacier->syncer->half_length, "Track 1 buffer should have the same length as the syncer");
+
+
+  cm_destroy(cm);
+  glacier_destroy(glacier);
+
+  return NULL;
+}
+
 char *test_glacier_app() {
   mu_suite_start();
 
   mu_run_test(test_glacier_app_create);
   mu_run_test(test_glacier_startup);
+  mu_run_test(test_glacier_multiple_track_record);
 
   return NULL;
 }
