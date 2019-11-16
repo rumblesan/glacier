@@ -67,7 +67,6 @@ SyncTimingMessage sc_keep_sync(SyncControl *sc, uint32_t count_increase) {
 }
 
 void _sc_calculate_sync_lengths(SyncControl *sc, uint32_t recorded_length) {
-  printf("calculating sync lengths from %d\n", recorded_length);
   sc->sync_length = recorded_length;
   sc->half_length = recorded_length / 2;
   sc->quarter_length = sc->half_length / 2;
