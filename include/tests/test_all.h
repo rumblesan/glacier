@@ -1,7 +1,7 @@
 #pragma once
 
-char *test_audio_buffer();
-char *test_control_message();
-char *test_sync_control();
-char *test_loop_track();
-char *test_glacier_app();
+void test_audio_buffer();
+void test_control_message();
+void test_sync_control();
+void test_loop_track();
+void test_glacier_app();

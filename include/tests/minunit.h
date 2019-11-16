@@ -5,26 +5,53 @@
 #include <dbg.h>
 #include <stdlib.h>
 
-#define mu_suite_start() char *message = NULL
+/*  Maximum length of last message */
+#define MINUNIT_MESSAGE_LEN 1024
 
-#define test_err(M, ...) fprintf(stderr, "[FAILURE] (%s:%d) " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+extern int minunit_run;
+extern int minunit_assert;
+extern int minunit_fail;
+extern int minunit_status;
 
-#define mu_assert(test, message, ...) if (!(test)) { test_err(message, ##__VA_ARGS__); return message; }
-#define mu_run_test(test) log_info("\n-----%s", " " #test); \
-    message = test(); tests_run++; if (message) return message;
+/*  Last message */
+char minunit_last_message[MINUNIT_MESSAGE_LEN];
 
-#define RUN_TESTS(name) int main(int argc, char *argv[]) {\
-    argc = 1; \
-    printf("----\nRUNNING: %s\n", argv[0]);\
-    char *result = name();\
-    if (result != 0) {\
-        printf("FAILED: %s\n", result);\
-    }\
-    else {\
-        printf("ALL TESTS PASSED\n");\
-    }\
-    printf("Tests run: %d\n", tests_run);\
-    exit(result != 0);\
-}
+#define test_err(M, ...) snprintf(minunit_last_message, MINUNIT_MESSAGE_LEN, "[FAILURE] (%s:%d) " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 
-uint8_t tests_run;
+#define MU__SAFE_BLOCK(block) do {\
+	block\
+} while(0)
+
+#define mu_run_suite(suite, name) MU__SAFE_BLOCK(\
+	printf("%s tests:\n", name);\
+	suite();\
+  printf("\n");\
+	fflush(stdout);\
+)
+
+#define mu_run_test(test) MU__SAFE_BLOCK(\
+	minunit_status = 0;\
+	test();\
+	minunit_run++;\
+	if (minunit_status) {\
+		minunit_fail++;\
+		printf("F");\
+		printf("\n%s\n", minunit_last_message);\
+	}\
+	fflush(stdout);\
+)
+
+#define mu_assert(test, message, ...) MU__SAFE_BLOCK(\
+	minunit_assert++;\
+	if (!(test)) {\
+    test_err(message, ##__VA_ARGS__);\
+		minunit_status = 1;\
+		return;\
+	} else {\
+		printf(".");\
+	}\
+)
+
+#define MU_REPORT() MU__SAFE_BLOCK(\
+	printf("\n%d tests, %d assertions, %d failures\n", minunit_run, minunit_assert, minunit_fail);\
+)

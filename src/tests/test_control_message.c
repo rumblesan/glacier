@@ -5,7 +5,7 @@
 #include "core/control_message.h"
 #include "core/loop_track.h"
 
-char *test_control_message_create() {
+void test_control_message_create() {
 
   uint8_t track_number = 1;
   LoopTrackAction action = LoopTrack_Action_Record;
@@ -16,13 +16,8 @@ char *test_control_message_create() {
   mu_assert(cm->action == action, "Incorrect action");
 
   cm_destroy(cm);
-  return NULL;
 }
 
-char *test_control_message() {
-  mu_suite_start();
-
+void test_control_message() {
   mu_run_test(test_control_message_create);
-
-  return NULL;
 }

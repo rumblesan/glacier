@@ -7,7 +7,7 @@
 #include "core/audio_buffer.h"
 #include "core/sync_timing_message.h"
 
-char *test_loop_track_create() {
+void test_loop_track_create() {
 
   AudioBuffer *buffer = ab_create(1024, 2);
   LoopTrack *loop_track = lt_create(0, buffer);
@@ -16,11 +16,9 @@ char *test_loop_track_create() {
   mu_assert(loop_track->state == LoopTrack_State_Stopped, "Loop Track should start in empty state");
 
   lt_destroy(loop_track);
-
-  return NULL;
 }
 
-char *test_loop_track_state_changes() {
+void test_loop_track_state_changes() {
   uint8_t channels = 2;
   uint32_t frame_count = 64;
 
@@ -69,8 +67,8 @@ char *test_loop_track_state_changes() {
   uint32_t recorded_length = lt_recorded_length(loop_track);
   uint32_t expected_playback = (frame_count - sync_offset);
   uint32_t playback_length = lt_playback_length(loop_track);
-  mu_assert(recorded_length == expected_length, "Should have recorded %d not %d", expected_length, recorded_length)
-  mu_assert(playback_length == expected_playback, "Should have played back %d not %d", expected_playback, playback_length)
+  mu_assert(recorded_length == expected_length, "Should have recorded %d not %d", expected_length, recorded_length);
+  mu_assert(playback_length == expected_playback, "Should have played back %d not %d", expected_playback, playback_length);
 
   lt_handle_action(loop_track, LoopTrack_Action_Playback);
   mu_assert(loop_track->state == LoopTrack_State_Stopped, "Loop Track should be in Stopped state");
@@ -93,11 +91,9 @@ char *test_loop_track_state_changes() {
   lt_destroy(loop_track);
   free(input_audio);
   free(output_audio);
-
-  return NULL;
 }
 
-char *test_loop_track_cancel_recording() {
+void test_loop_track_cancel_recording() {
   uint8_t channels = 2;
   uint32_t frame_count = 64;
 
@@ -131,7 +127,7 @@ char *test_loop_track_cancel_recording() {
 
   uint32_t expected_length = 0;
   uint32_t recorded_length = lt_recorded_length(loop_track);
-  mu_assert(recorded_length == expected_length, "Should have recorded %d not %d", expected_length, recorded_length)
+  mu_assert(recorded_length == expected_length, "Should have recorded %d not %d", expected_length, recorded_length);
 
   lt_handle_action(loop_track, LoopTrack_Action_Playback);
   mu_assert(loop_track->state == LoopTrack_State_Stopped, "Loop Track should remain in Stopped state");
@@ -139,16 +135,10 @@ char *test_loop_track_cancel_recording() {
   lt_destroy(loop_track);
   free(input_audio);
   free(output_audio);
-
-  return NULL;
 }
 
-char *test_loop_track() {
-  mu_suite_start();
-
+void test_loop_track() {
   mu_run_test(test_loop_track_create);
   mu_run_test(test_loop_track_state_changes);
   mu_run_test(test_loop_track_cancel_recording);
-
-  return NULL;
 }

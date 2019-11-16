@@ -5,7 +5,7 @@
 #include "core/audio_buffer.h"
 #include "core/types.h"
 
-char *test_audio_buffer_create() {
+void test_audio_buffer_create() {
 
   uint32_t max_length = 1000;
   uint8_t channels = 2;
@@ -16,10 +16,9 @@ char *test_audio_buffer_create() {
   mu_assert(buffer->channels == channels, "Should have correct channel number");
 
   ab_destroy(buffer);
-  return NULL;
 }
 
-char *test_audio_buffer_record() {
+void test_audio_buffer_record() {
   uint32_t max_length = 1000;
   uint8_t channels = 2;
   uint32_t frame_count = 40;
@@ -35,14 +34,9 @@ char *test_audio_buffer_record() {
   mu_assert(buffer->length == recorded_frames, "Audio buffer should have recorded %d frames", recorded_frames);
 
   ab_destroy(buffer);
-  return NULL;
 }
 
-char *test_audio_buffer() {
-  mu_suite_start();
-
+void test_audio_buffer() {
   mu_run_test(test_audio_buffer_create);
   mu_run_test(test_audio_buffer_record);
-
-  return NULL;
 }

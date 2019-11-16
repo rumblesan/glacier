@@ -19,7 +19,7 @@ void _cleanup(SyncControl *sc, uint8_t track_count, AudioBuffer **buffers, LoopT
 
 }
 
-char *test_sync_control_create() {
+void test_sync_control_create() {
 
   uint8_t track_count = 3;
   AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * track_count);
@@ -38,11 +38,9 @@ char *test_sync_control_create() {
   mu_assert(sc->state == SyncControl_State_Empty, "Sync Control should start in empty state");
 
   _cleanup(sc, track_count, buffers, loop_tracks);
-
-  return NULL;
 }
 
-char *test_syncing() {
+void test_syncing() {
   uint8_t track_count = 3;
   AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * track_count);
   for (uint8_t i = 0; i < track_count; i++) {
@@ -92,15 +90,9 @@ char *test_syncing() {
   mu_assert(timing7.offset == 3, "Sync Control should have an offset of 3");
 
   _cleanup(sc, track_count, buffers, loop_tracks);
-
-  return NULL;
 }
 
-char *test_sync_control() {
-  mu_suite_start();
-
+void test_sync_control() {
   mu_run_test(test_sync_control_create);
   mu_run_test(test_syncing);
-
-  return NULL;
 }

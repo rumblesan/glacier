@@ -4,7 +4,7 @@
 
 #include "core/glacier.h"
 
-char *test_glacier_app_create() {
+void test_glacier_app_create() {
 
   uint8_t track_count = 3;
   uint32_t max_buffer_length = 4000;
@@ -12,11 +12,9 @@ char *test_glacier_app_create() {
   GlacierAppState *glacier = glacier_create(track_count, max_buffer_length, channels);
 
   glacier_destroy(glacier);
-
-  return NULL;
 }
 
-char *test_glacier_startup() {
+void test_glacier_startup() {
 
   uint8_t track_count = 3;
   uint32_t max_buffer_length = 4000;
@@ -63,11 +61,9 @@ char *test_glacier_startup() {
 
   cm_destroy(cm);
   glacier_destroy(glacier);
-
-  return NULL;
 }
 
-char *test_glacier_multiple_track_record() {
+void test_glacier_multiple_track_record() {
 
   uint8_t track_count = 3;
   uint32_t max_buffer_length = 4000;
@@ -142,16 +138,10 @@ char *test_glacier_multiple_track_record() {
 
   cm_destroy(cm);
   glacier_destroy(glacier);
-
-  return NULL;
 }
 
-char *test_glacier_app() {
-  mu_suite_start();
-
+void test_glacier_app() {
   mu_run_test(test_glacier_app_create);
   mu_run_test(test_glacier_startup);
   mu_run_test(test_glacier_multiple_track_record);
-
-  return NULL;
 }
