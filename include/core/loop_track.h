@@ -46,7 +46,7 @@ typedef struct LoopTrack {
 
 } LoopTrack;
 
-LoopTrack *lt_create(uint8_t buffer_id, AudioBuffer *buffer);
+LoopTrack *lt_create(uint8_t buffer_id, uint32_t max_length, uint8_t channels);
 
 LoopTrackState lt_handle_action(LoopTrack *lc, LoopTrackAction action);
 
@@ -54,9 +54,11 @@ bool lt_is_playing(LoopTrack *lc);
 
 bool lt_is_empty(LoopTrack *lc);
 
-uint32_t lt_recorded_length(LoopTrack *lc);
+uint32_t lt_length(LoopTrack *lc);
 
-uint32_t lt_playback_length(LoopTrack *lc);
+uint32_t lt_recordhead_pos(LoopTrack *lc);
+
+uint32_t lt_playhead_pos(LoopTrack *lc);
 
 LoopTrackStateChange lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count);
 

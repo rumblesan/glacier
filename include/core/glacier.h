@@ -19,12 +19,13 @@ typedef struct GlacierAppState {
 
   SyncControl *syncer;
 
-  AudioBuffer **buffers;
   LoopTrack **loop_tracks;
 
 } GlacierAppState;
 
 GlacierAppState *glacier_create(uint8_t track_count, uint32_t max_buffer_length, uint8_t channels);
+
+LoopTrack *glacier_track(GlacierAppState *glacier, uint8_t track_id);
 
 void glacier_handle_command(GlacierAppState *glacier, ControlMessage *msg);
 

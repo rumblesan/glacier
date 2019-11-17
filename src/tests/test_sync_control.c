@@ -6,30 +6,21 @@
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
-void _cleanup(SyncControl *sc, uint8_t track_count, AudioBuffer **buffers, LoopTrack **loop_tracks) {
+void _cleanup(SyncControl *sc, uint8_t track_count, LoopTrack **loop_tracks) {
   sc_destroy(sc);
 
   for (uint8_t i = 0; i < track_count; i++) {
     lt_destroy(loop_tracks[i]);
   }
   free(loop_tracks);
-
-  // buffers are free when buffer control is destroyed
-  free(buffers);
-
 }
 
 void test_sync_control_create() {
 
   uint8_t track_count = 3;
-  AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * track_count);
-  for (uint8_t i = 0; i < track_count; i++) {
-    buffers[i] = ab_create(1024, 2);
-  }
-
   LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
   for (uint8_t i = 0; i < track_count; i++) {
-    loop_tracks[i] = lt_create(i, buffers[i]);
+    loop_tracks[i] = lt_create(i, 1024, 2);
   }
 
   SyncControl *sc = sc_create(loop_tracks, track_count);
@@ -37,26 +28,21 @@ void test_sync_control_create() {
 
   mu_assert(sc->state == SyncControl_State_Empty, "Sync Control should start in empty state");
 
-  _cleanup(sc, track_count, buffers, loop_tracks);
+  _cleanup(sc, track_count, loop_tracks);
 }
 
 void test_syncing() {
   uint8_t track_count = 3;
-  AudioBuffer **buffers = malloc(sizeof(AudioBuffer*) * track_count);
-  for (uint8_t i = 0; i < track_count; i++) {
-    buffers[i] = ab_create(1024, 2);
-  }
-
   LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
   for (uint8_t i = 0; i < track_count; i++) {
-    loop_tracks[i] = lt_create(i, buffers[i]);
+    loop_tracks[i] = lt_create(i, 1024, 2);
   }
 
   SyncControl *sc = sc_create(loop_tracks, track_count);
   mu_assert(sc != NULL, "Could not create Sync Control");
 
   uint32_t recorded_length = 100;
-  buffers[0]->length = recorded_length;
+  loop_tracks[0]->buffer->length = recorded_length;
   SyncControlState after_start = sc_handle_track_change(sc, LoopTrack_Change_Finished_Recording, loop_tracks[0]);
 
   mu_assert(after_start == SyncControl_State_Running, "Sync Control should be running");
@@ -89,7 +75,7 @@ void test_syncing() {
   mu_assert(timing7.interval == SyncControl_Interval_Whole, "Sync Control send whole sync");
   mu_assert(timing7.offset == 3, "Sync Control should have an offset of 3");
 
-  _cleanup(sc, track_count, buffers, loop_tracks);
+  _cleanup(sc, track_count, loop_tracks);
 }
 
 void test_sync_control() {

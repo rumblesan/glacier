@@ -8,13 +8,14 @@
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
-LoopTrack *lt_create(uint8_t buffer_id, AudioBuffer *buffer) {
+LoopTrack *lt_create(uint8_t buffer_id, uint32_t max_length, uint8_t channels) {
   LoopTrack *lt = calloc(1, sizeof(LoopTrack));
   check_mem(lt);
 
   lt->buffer_id = buffer_id;
 
-  check(buffer != NULL, "Invalid audio buffer given");
+  AudioBuffer *buffer = ab_create(max_length, channels);
+  check_mem(buffer);
   lt->buffer = buffer;
 
   lt->state = LoopTrack_State_Stopped;
@@ -188,11 +189,15 @@ bool lt_is_empty(LoopTrack *lt) {
   return lt->buffer->length <= 0;
 }
 
-uint32_t lt_recorded_length(LoopTrack *lc) {
+uint32_t lt_length(LoopTrack *lc) {
   return lc->buffer->length;
 }
 
-uint32_t lt_playback_length(LoopTrack *lc) {
+uint32_t lt_recordhead_pos(LoopTrack *lc) {
+  return lc->buffer->record_head_pos;
+}
+
+uint32_t lt_playhead_pos(LoopTrack *lc) {
   return lc->buffer->playback_head_pos;
 }
 

@@ -33,16 +33,10 @@ GlacierAppState *glacier_create(uint8_t track_count, uint32_t max_buffer_length,
 
   ck_ring_init(gs->control_bus, control_bus_size);
 
-  gs->buffers = malloc(sizeof(AudioBuffer*) * track_count);
-  check_mem(gs->buffers);
-  for (uint8_t i = 0; i < track_count; i++) {
-    gs->buffers[i] = ab_create(max_buffer_length, channels);
-    check_mem(gs->buffers[i]);
-  }
   gs->loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
   check_mem(gs->loop_tracks);
   for (uint8_t i = 0; i < track_count; i++) {
-    gs->loop_tracks[i] = lt_create(i, gs->buffers[i]);
+    gs->loop_tracks[i] = lt_create(i, max_buffer_length, channels);
     check_mem(gs->loop_tracks[i]);
   }
 
@@ -52,6 +46,11 @@ GlacierAppState *glacier_create(uint8_t track_count, uint32_t max_buffer_length,
   return gs;
 error:
   return NULL;
+}
+
+LoopTrack *glacier_track(GlacierAppState *glacier, uint8_t track_id) {
+  if (track_id < 0 || track_id > glacier->track_count) { return NULL; }
+  return glacier->loop_tracks[track_id];
 }
 
 void glacier_handle_command(GlacierAppState *glacier, ControlMessage *msg) {
@@ -77,8 +76,6 @@ void glacier_destroy(GlacierAppState *gs) {
     lt_destroy(gs->loop_tracks[i]);
   }
   free(gs->loop_tracks);
-  // buffers are free when buffer control is destroyed
-  free(gs->buffers);
 
   check(gs->syncer != NULL, "Invalid Glacier State Syncer");
   sc_destroy(gs->syncer);

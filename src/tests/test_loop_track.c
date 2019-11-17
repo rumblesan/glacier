@@ -9,8 +9,7 @@
 
 void test_loop_track_create() {
 
-  AudioBuffer *buffer = ab_create(1024, 2);
-  LoopTrack *loop_track = lt_create(0, buffer);
+  LoopTrack *loop_track = lt_create(0, 1024, 2);
   mu_assert(loop_track != NULL, "Could not create Loop Track");
 
   mu_assert(loop_track->state == LoopTrack_State_Stopped, "Loop Track should start in empty state");
@@ -25,8 +24,7 @@ void test_loop_track_state_changes() {
   SAMPLE *input_audio = calloc(frame_count * channels, sizeof(SAMPLE));
   SAMPLE *output_audio = calloc(frame_count * channels, sizeof(SAMPLE));
 
-  AudioBuffer *buffer = ab_create(2048, channels);
-  LoopTrack *loop_track = lt_create(0, buffer);
+  LoopTrack *loop_track = lt_create(0, 2048, channels);
   mu_assert(loop_track != NULL, "Could not create Loop Track");
 
   lt_handle_action(loop_track, LoopTrack_Action_Record);
@@ -64,9 +62,9 @@ void test_loop_track_state_changes() {
   mu_assert(lt_is_playing(loop_track), "Loop Track should be playing");
 
   uint32_t expected_length = ((3 * frame_count) + sync_offset);
-  uint32_t recorded_length = lt_recorded_length(loop_track);
+  uint32_t recorded_length = lt_length(loop_track);
   uint32_t expected_playback = (frame_count - sync_offset);
-  uint32_t playback_length = lt_playback_length(loop_track);
+  uint32_t playback_length = lt_playhead_pos(loop_track);
   mu_assert(recorded_length == expected_length, "Should have recorded %d not %d", expected_length, recorded_length);
   mu_assert(playback_length == expected_playback, "Should have played back %d not %d", expected_playback, playback_length);
 
@@ -100,8 +98,7 @@ void test_loop_track_cancel_recording() {
   SAMPLE *input_audio = calloc(frame_count * channels, sizeof(SAMPLE));
   SAMPLE *output_audio = calloc(frame_count * channels, sizeof(SAMPLE));
 
-  AudioBuffer *buffer = ab_create(2048, channels);
-  LoopTrack *loop_track = lt_create(0, buffer);
+  LoopTrack *loop_track = lt_create(0, 2048, channels);
   mu_assert(loop_track != NULL, "Could not create Loop Track");
 
   lt_handle_action(loop_track, LoopTrack_Action_Record);
@@ -126,7 +123,7 @@ void test_loop_track_cancel_recording() {
   mu_assert(!lt_is_playing(loop_track), "Loop Track should not be playing");
 
   uint32_t expected_length = 0;
-  uint32_t recorded_length = lt_recorded_length(loop_track);
+  uint32_t recorded_length = lt_length(loop_track);
   mu_assert(recorded_length == expected_length, "Should have recorded %d not %d", expected_length, recorded_length);
 
   lt_handle_action(loop_track, LoopTrack_Action_Playback);
