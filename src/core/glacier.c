@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "ck_ring.h"
-
 #include "dbg.h"
 
 #include "core/glacier.h"
@@ -14,24 +12,13 @@
 #include "core/control_message.h"
 #include "core/sync_timing_message.h"
 
-GlacierAppState *glacier_create(uint8_t track_count, uint32_t max_buffer_length, uint8_t channels) {
+GlacierAudio *glacier_create(uint8_t track_count, uint32_t max_buffer_length, uint8_t channels) {
 
-  GlacierAppState *gs = malloc(sizeof(GlacierAppState));
+  GlacierAudio *gs = malloc(sizeof(GlacierAudio));
   check_mem(gs);
 
   gs->track_count = track_count;
   gs->channels = channels;
-
-  uint16_t control_bus_size = 1024;
-  gs->control_bus = malloc(sizeof(ck_ring_t));
-  check_mem(gs->control_bus);
-
-  gs->control_bus_buffer = malloc(
-    sizeof(ck_ring_buffer_t) * control_bus_size
-  );
-  check_mem(gs->control_bus_buffer);
-
-  ck_ring_init(gs->control_bus, control_bus_size);
 
   gs->loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
   check_mem(gs->loop_tracks);
@@ -48,19 +35,19 @@ error:
   return NULL;
 }
 
-LoopTrack *glacier_track(GlacierAppState *glacier, uint8_t track_id) {
+LoopTrack *glacier_track(GlacierAudio *glacier, uint8_t track_id) {
   if (track_id < 0 || track_id > glacier->track_count) { return NULL; }
   return glacier->loop_tracks[track_id];
 }
 
-void glacier_handle_command(GlacierAppState *glacier, ControlMessage *msg) {
+void glacier_handle_command(GlacierAudio *glacier, ControlMessage *msg) {
   uint8_t track_number = msg->track_number;
   if (track_number >= 0 && track_number < glacier->track_count) {
     lt_handle_action(glacier->loop_tracks[track_number], msg->action);
   }
 }
 
-void glacier_handle_audio(GlacierAppState *glacier, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count) {
+void glacier_handle_audio(GlacierAudio *glacier, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count) {
   SyncTimingMessage sync_timer = sc_keep_sync(glacier->syncer, frame_count);
   for (uint8_t i = 0; i < glacier->track_count; i++) {
     LoopTrackStateChange state_change = lt_handle_audio(glacier->loop_tracks[i], sync_timer, input_samples, output_samples, frame_count);
@@ -68,7 +55,7 @@ void glacier_handle_audio(GlacierAppState *glacier, const SAMPLE *input_samples,
   }
 }
 
-void glacier_destroy(GlacierAppState *gs) {
+void glacier_destroy(GlacierAudio *gs) {
   check(gs != NULL, "Invalid Glacier State");
 
   check(gs->loop_tracks != NULL, "Invalid Glacier State buffer control list");

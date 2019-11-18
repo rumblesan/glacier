@@ -1,11 +1,14 @@
 #include <stdlib.h>
 #include <inttypes.h>
+#include <pthread.h>
+#include <time.h>
 
 #include "portaudio.h"
 
 #include "dbg.h"
 
 #include "core/types.h"
+#include "core/app.h"
 #include "core/glacier.h"
 #include "core/control_message.h"
 #include "core/loop_track.h"
@@ -15,7 +18,7 @@
 #define FRAMES_PER_BUFFER   (64)
 
 
-static int glacierAudioCB(
+static int audioCB(
   const void *inputBuffer,
   void *outputBuffer,
   unsigned long framesPerBuffer,
@@ -25,7 +28,7 @@ static int glacierAudioCB(
 ) {
   SAMPLE *out = (SAMPLE*)outputBuffer;
   const SAMPLE *in = (const SAMPLE*)inputBuffer;
-  GlacierAppState *glacier = (GlacierAppState*)userData;
+  AppState *app = (AppState*)userData;
 
   (void) timeInfo;
   (void) statusFlags;
@@ -36,33 +39,35 @@ static int glacierAudioCB(
 
   while (
     ck_ring_dequeue_spsc(
-      glacier->control_bus,
-      glacier->control_bus_buffer,
+      app->control_bus,
+      app->control_bus_buffer,
       &new_control_message
     ) == true
   ) {
-    uint8_t track_number = new_control_message->track_number;
-    LoopTrackAction action = new_control_message->action;
-    printf("received message %d for buffer %d\n", action, track_number);
     glacier_handle_command(
-      glacier,
+      app->glacier,
+      new_control_message
+    );
+    ck_ring_enqueue_spsc(
+      app->control_bus_garbage,
+      app->control_bus_garbage_buffer,
       new_control_message
     );
   }
-  glacier_handle_audio(glacier, in, out, framesPerBuffer);
+  glacier_handle_audio(app->glacier, in, out, framesPerBuffer);
 
   return paContinue;
 }
 
 
-void input_handler(GlacierAppState *glacier) {
+void input_handler(AppState *app) {
   printf("Hit ENTER to stop program.\n");
   uint8_t buffer_num;
   char command;
   while (1) {
     scanf("%" SCNu8 "%c", &buffer_num, &command);
-    if (buffer_num > glacier->track_count) {
-      printf("%" PRIu8 " is not a valid buffer number\n", buffer_num);
+    if (buffer_num > app->glacier->track_count) {
+      printf("%d is not a valid buffer number\n", buffer_num);
       continue;
     }
     switch (command) {
@@ -73,8 +78,8 @@ void input_handler(GlacierAppState *glacier) {
         printf("starting recording in buffer %" PRIu8 "\n", buffer_num);
         if (
             ck_ring_enqueue_spsc(
-              glacier->control_bus,
-              glacier->control_bus_buffer,
+              app->control_bus,
+              app->control_bus_buffer,
               cm_create(buffer_num - 1, LoopTrack_Action_Record)
               ) == false
            ) {
@@ -85,8 +90,8 @@ void input_handler(GlacierAppState *glacier) {
         printf("stopping recording in buffer %" PRIu8 "\n", buffer_num);
         if (
             ck_ring_enqueue_spsc(
-              glacier->control_bus,
-              glacier->control_bus_buffer,
+              app->control_bus,
+              app->control_bus_buffer,
               cm_create(buffer_num - 1, LoopTrack_Action_Playback)
               ) == false
            ) {
@@ -99,11 +104,39 @@ void input_handler(GlacierAppState *glacier) {
   }
 }
 
+void *garbage_collector(void *_app) {
+  AppState *app = _app;
+
+  struct timespec tim, tim2;
+  tim.tv_sec = 5;
+  tim.tv_nsec = 0;
+
+  ControlMessage *new_control_message = NULL;
+
+  while(app->running) {
+    while (
+      ck_ring_dequeue_spsc(
+        app->control_bus,
+        app->control_bus_buffer,
+        &new_control_message
+      ) == true
+    ) {
+      cm_destroy(new_control_message);
+    }
+    sched_yield();
+    nanosleep(&tim, &tim2);
+  }
+  return NULL;
+}
+
 /*******************************************************************/
 int main(void) {
   PaStreamParameters inputParameters, outputParameters;
   PaStream *stream;
   PaError err;
+
+  pthread_t garbage_thread;
+  pthread_attr_t garbage_thread_attr;
 
   err = Pa_Initialize();
   check(err == paNoError, "could not initialize port audio");
@@ -124,14 +157,26 @@ int main(void) {
   outputParameters.hostApiSpecificStreamInfo = NULL;
 
   uint8_t record_buffer_count = 3;
-  uint32_t record_buffer_length = 3;
+  uint32_t record_buffer_length = 30;
   uint8_t record_buffer_channels = 2;
 
-  GlacierAppState *glacier = glacier_create(
+  GlacierAudio *glacier = glacier_create(
     record_buffer_count,
     record_buffer_length * SAMPLE_RATE,
     record_buffer_channels
   );
+
+  AppState *app = app_state_create(glacier);
+
+  check(!pthread_attr_init(&garbage_thread_attr),
+        "Error setting reader thread attributes");
+  check(!pthread_attr_setdetachstate(&garbage_thread_attr, PTHREAD_CREATE_DETACHED),
+        "Error setting reader thread detach state");
+  check(!pthread_create(&garbage_thread,
+                        &garbage_thread_attr,
+                        &garbage_collector,
+                        app),
+        "Error creating file reader thread");
 
   err = Pa_OpenStream(
     &stream,
@@ -140,15 +185,16 @@ int main(void) {
     SAMPLE_RATE,
     FRAMES_PER_BUFFER,
     0,
-    glacierAudioCB,
-    glacier
+    audioCB,
+    app
   );
   check(err == paNoError, "could not open stream");
 
   err = Pa_StartStream( stream );
   check(err == paNoError, "could not start stream");
 
-  input_handler(glacier);
+  input_handler(app);
+  app->running = false;
 
   err = Pa_CloseStream( stream );
   check(err == paNoError, "could not close stream");
