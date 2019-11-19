@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <pthread.h>
-#include <time.h>
 
 #include "portaudio.h"
 
@@ -9,6 +8,7 @@
 
 #include "core/types.h"
 #include "core/app.h"
+#include "core/osc_handler.h"
 #include "core/glacier.h"
 #include "core/control_message.h"
 #include "core/loop_track.h"
@@ -59,50 +59,6 @@ static int audioCB(
   return paContinue;
 }
 
-
-void input_handler(AppState *app) {
-  printf("Hit ENTER to stop program.\n");
-  uint8_t buffer_num;
-  char command;
-  while (1) {
-    scanf("%" SCNu8 "%c", &buffer_num, &command);
-    if (buffer_num > app->glacier->track_count) {
-      printf("%d is not a valid buffer number\n", buffer_num);
-      continue;
-    }
-    switch (command) {
-      case 'q':
-        printf("quitting\n");
-        return;
-      case 'r':
-        printf("starting recording in buffer %" PRIu8 "\n", buffer_num);
-        if (
-            ck_ring_enqueue_spsc(
-              app->control_bus,
-              app->control_bus_buffer,
-              cm_create(buffer_num - 1, LoopTrack_Action_Record)
-              ) == false
-           ) {
-          printf("Could not send message to audio thread\n");
-        }
-        break;
-      case 's':
-        printf("stopping recording in buffer %" PRIu8 "\n", buffer_num);
-        if (
-            ck_ring_enqueue_spsc(
-              app->control_bus,
-              app->control_bus_buffer,
-              cm_create(buffer_num - 1, LoopTrack_Action_Playback)
-              ) == false
-           ) {
-          printf("Could not send message to audio thread\n");
-        }
-        break;
-      default:
-        printf("%c unknown command\n", command);
-    }
-  }
-}
 
 void *garbage_collector(void *_app) {
   AppState *app = _app;
@@ -193,8 +149,7 @@ int main(void) {
   err = Pa_StartStream( stream );
   check(err == paNoError, "could not start stream");
 
-  input_handler(app);
-  app->running = false;
+  osc_start_server(app);
 
   err = Pa_CloseStream( stream );
   check(err == paNoError, "could not close stream");

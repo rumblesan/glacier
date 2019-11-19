@@ -11,7 +11,7 @@ typedef struct AppState {
 
   GlacierAudio *glacier;
 
-  bool running;
+  volatile bool running;
 
   ck_ring_buffer_t *control_bus_buffer;
   ck_ring_t *control_bus;

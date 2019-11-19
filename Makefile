@@ -2,7 +2,7 @@ CC                = clang
 CFLAGS            = -Wall
 LDFLAGS           = -c
 VPATH             = src src/core src/tests
-LIBS              = -lportaudio -lck
+LIBS              = -lportaudio -lck -llo
 
 TEST_C_FLAGS      = $(CFLAGS)
 TEST_LIBS         =
