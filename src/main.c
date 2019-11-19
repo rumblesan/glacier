@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "portaudio.h"
 
@@ -8,7 +9,7 @@
 
 #include "core/types.h"
 #include "core/app.h"
-#include "core/osc_handler.h"
+#include "core/osc_server.h"
 #include "core/glacier.h"
 #include "core/control_message.h"
 #include "core/loop_track.h"
@@ -91,6 +92,8 @@ int main(void) {
   PaStream *stream;
   PaError err;
 
+  OSCServer osc_server = NULL;
+
   pthread_t garbage_thread;
   pthread_attr_t garbage_thread_attr;
 
@@ -122,7 +125,10 @@ int main(void) {
     record_buffer_channels
   );
 
+
   AppState *app = app_state_create(glacier);
+
+  osc_server = osc_start_server(app);
 
   check(!pthread_attr_init(&garbage_thread_attr),
         "Error setting reader thread attributes");
@@ -149,16 +155,21 @@ int main(void) {
   err = Pa_StartStream( stream );
   check(err == paNoError, "could not start stream");
 
-  osc_start_server(app);
+  while (app->running) {
+    sleep(1);
+    usleep(1000);
+  }
 
   err = Pa_CloseStream( stream );
   check(err == paNoError, "could not close stream");
 
   printf("Finished.");
+  osc_stop_server(osc_server);
   Pa_Terminate();
   return 0;
 
 error:
+  osc_stop_server(osc_server);
   Pa_Terminate();
   fprintf( stderr, "An error occured while using the portaudio stream\n" );
   fprintf( stderr, "Error number: %d\n", err );

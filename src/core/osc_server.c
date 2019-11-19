@@ -1,14 +1,13 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <unistd.h>
 
 #include "ck_ring.h"
 #include "lo/lo.h"
 
 #include "dbg.h"
 
-#include "core/osc_handler.h"
+#include "core/osc_server.h"
 #include "core/app.h"
 #include "core/glacier.h"
 #include "core/control_message.h"
@@ -62,20 +61,20 @@ int playback_handler(
   return 0;
 }
 
-void osc_start_server(AppState *app) {
+OSCServer osc_start_server(AppState *app) {
   printf("Setting up OSC server\n");
-  lo_server_thread st = lo_server_thread_new("7770", error);
+  lo_server_thread osc_server = lo_server_thread_new("7770", error);
 
-  lo_server_thread_add_method(st, "/track/action/record", "i", record_handler, app);
-  lo_server_thread_add_method(st, "/track/action/playback", "i", playback_handler, app);
-  lo_server_thread_add_method(st, "/quit", NULL, quit_handler, app);
+  lo_server_thread_add_method(osc_server, "/track/action/record", "i", record_handler, app);
+  lo_server_thread_add_method(osc_server, "/track/action/playback", "i", playback_handler, app);
+  lo_server_thread_add_method(osc_server, "/quit", NULL, quit_handler, app);
 
-  lo_server_thread_start(st);
+  lo_server_thread_start(osc_server);
 
-  while (app->running) {
-    sleep(1);
-    usleep(1000);
-  }
+  return osc_server;
 
-  lo_server_thread_free(st);
+}
+
+void osc_stop_server(OSCServer osc_server) {
+  lo_server_thread_free(osc_server);
 }
