@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
     mu_run_suite(test_control_message, "Control Message");
     mu_run_suite(test_sync_control, "Sync Control");
     mu_run_suite(test_loop_track, "Loop Track");
+    mu_run_suite(test_ui, "UI");
     mu_run_suite(test_glacier_app, "Glacier App");
 
     MU_REPORT();
