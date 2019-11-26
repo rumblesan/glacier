@@ -9,6 +9,17 @@
 #include "core/app.h"
 #include "core/glacier.h"
 
+bool create_ring_buffer(ck_ring_buffer_t **buffer, ck_ring_t **bus, uint16_t size) {
+  *bus = malloc(sizeof(ck_ring_t));
+  check_mem(*bus);
+  *buffer = malloc(sizeof(ck_ring_buffer_t) * size);
+  check_mem(*buffer);
+  ck_ring_init(*bus, size);
+  return true;
+error:
+  return false;
+}
+
 AppState *app_state_create(GlacierAudio *glacier) {
 
   AppState *as = malloc(sizeof(AppState));
@@ -21,21 +32,15 @@ AppState *app_state_create(GlacierAudio *glacier) {
 
   uint16_t control_bus_size = 1024;
 
-  as->control_bus = malloc(sizeof(ck_ring_t));
-  check_mem(as->control_bus);
-  as->control_bus_buffer = malloc(
-    sizeof(ck_ring_buffer_t) * control_bus_size
-  );
-  check_mem(as->control_bus_buffer);
-  ck_ring_init(as->control_bus, control_bus_size);
 
-  as->control_bus_garbage = malloc(sizeof(ck_ring_t));
-  check_mem(as->control_bus_garbage);
-  as->control_bus_garbage_buffer = malloc(
-    sizeof(ck_ring_buffer_t) * control_bus_size
+  check(
+    create_ring_buffer(&as->control_bus_buffer, &as->control_bus, control_bus_size),
+    "Could not create control bus ring"
   );
-  check_mem(as->control_bus_garbage_buffer);
-  ck_ring_init(as->control_bus_garbage, control_bus_size);
+  check(
+    create_ring_buffer(&as->control_bus_garbage_buffer, &as->control_bus_garbage, control_bus_size),
+    "Could not create control bus garbage ring"
+  );
 
   return as;
 error:
