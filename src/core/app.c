@@ -8,6 +8,7 @@
 
 #include "core/app.h"
 #include "core/glacier.h"
+#include "core/ui.h"
 
 bool create_ring_buffer(ck_ring_buffer_t **buffer, ck_ring_t **bus, uint16_t size) {
   *bus = malloc(sizeof(ck_ring_t));
@@ -20,7 +21,7 @@ error:
   return false;
 }
 
-AppState *app_state_create(GlacierAudio *glacier) {
+AppState *app_state_create(GlacierAudio *glacier, UIInfo *ui) {
 
   AppState *as = malloc(sizeof(AppState));
   check_mem(as);
@@ -30,8 +31,10 @@ AppState *app_state_create(GlacierAudio *glacier) {
   check_mem(glacier);
   as->glacier = glacier;
 
-  uint16_t control_bus_size = 1024;
+  check_mem(ui);
+  as->ui = ui;
 
+  uint16_t control_bus_size = 1024;
 
   check(
     create_ring_buffer(&as->control_bus_buffer, &as->control_bus, control_bus_size),
@@ -42,6 +45,15 @@ AppState *app_state_create(GlacierAudio *glacier) {
     "Could not create control bus garbage ring"
   );
 
+  check(
+    create_ring_buffer(&as->ui_query_bus_buffer, &as->ui_query_bus, control_bus_size),
+    "Could not create ui query ring"
+  );
+  check(
+    create_ring_buffer(&as->ui_response_bus_buffer, &as->ui_response_bus, control_bus_size),
+    "Could not create ui response ring"
+  );
+
   return as;
 error:
   return NULL;
@@ -50,6 +62,7 @@ error:
 void app_state_destroy(AppState *as) {
   check(as != NULL, "Invalid App State");
 
+  // FIXME cleanup everything properlly
   free(as);
   return;
 error:

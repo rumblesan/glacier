@@ -1,8 +1,9 @@
 CC                = clang
-CFLAGS            = -Wall
+CFLAGS            = -Wall -g
+SDLFLAGS          = `sdl2-config --cflags --libs`
 LDFLAGS           = -c
 VPATH             = src src/core src/tests
-LIBS              = -lportaudio -lck -llo
+LIBS              = -lportaudio -lck -llo -lSDL2_ttf
 
 TEST_C_FLAGS      = $(CFLAGS)
 TEST_LIBS         =
@@ -52,10 +53,10 @@ $(TEST_BUILD_DIR)/%.o: %.c
 	$(CC) $(LDFLAGS) $(TEST_CFLAGS) $(INCLUDES) $< -o $@
 
 $(EXECUTABLE): $(MAIN_OBJECTS)
-	$(CC) $(LIBS) $(MAIN_OBJECTS) -o $@
+	$(CC) $(LIBS) $(SDLFLAGS) $(MAIN_OBJECTS) -o $@
 
 $(TEST_EXECUTABLE): $(TEST_OBJECTS)
-	$(CC) $(LIBS) $(TEST_OBJECTS) -o $@
+	$(CC) $(LIBS) $(SDLFLAGS) $(TEST_OBJECTS) -o $@
 
 clean:
 	rm -rf $(EXECUTABLE)

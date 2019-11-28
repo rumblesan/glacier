@@ -9,6 +9,9 @@
 
 #include "core/types.h"
 #include "core/app.h"
+#include "core/ui.h"
+#include "core/ui_coms.h"
+#include "core/ui_display.h"
 #include "core/osc_server.h"
 #include "core/glacier.h"
 #include "core/control_message.h"
@@ -125,11 +128,13 @@ int main(void) {
     record_buffer_channels
   );
 
+  UIInfo *ui = ui_create("Glacier", "arial.ttf", 24);
 
-  AppState *app = app_state_create(glacier);
+  AppState *app = app_state_create(glacier, ui);
 
   osc_server = osc_start_server(app);
 
+  debug("Starting garbage collector\n");
   check(!pthread_attr_init(&garbage_thread_attr),
         "Error setting reader thread attributes");
   check(!pthread_attr_setdetachstate(&garbage_thread_attr, PTHREAD_CREATE_DETACHED),
@@ -155,10 +160,7 @@ int main(void) {
   err = Pa_StartStream( stream );
   check(err == paNoError, "could not start stream");
 
-  while (app->running) {
-    sleep(1);
-    usleep(1000);
-  }
+  ui_display(app);
 
   err = Pa_CloseStream( stream );
   check(err == paNoError, "could not close stream");
@@ -166,11 +168,15 @@ int main(void) {
   printf("Finished.");
   osc_stop_server(osc_server);
   Pa_Terminate();
+  TTF_Quit();
+  SDL_Quit();
   return 0;
 
 error:
   osc_stop_server(osc_server);
   Pa_Terminate();
+  TTF_Quit();
+  SDL_Quit();
   fprintf( stderr, "An error occured while using the portaudio stream\n" );
   fprintf( stderr, "Error number: %d\n", err );
   fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
