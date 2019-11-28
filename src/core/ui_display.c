@@ -58,12 +58,6 @@ void ui_display(AppState *app) {
       if (e.type == SDL_QUIT){
         app->running = false;
       }
-      if (e.type == SDL_KEYDOWN){
-        app->running = false;
-      }
-      if (e.type == SDL_MOUSEBUTTONDOWN){
-        app->running = false;
-      }
     }
 
     if (
