@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "core/loop_track.h"
+#include "core/sync_control.h"
 
 typedef struct TrackUIDisplay {
   uint8_t track_id;
@@ -20,6 +21,10 @@ typedef struct TrackUIDisplay {
 typedef struct UIDisplayData {
 
   uint8_t track_count;
+
+  SyncControlState sync_state;
+  uint32_t sync_length;
+  uint32_t sync_pos;
 
   TrackUIDisplay **track_info;
 

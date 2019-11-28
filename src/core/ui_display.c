@@ -30,6 +30,19 @@ void draw_track_info(UIInfo *ui, uint8_t track_number, TrackUIDisplay *info) {
   SDL_RenderCopy(ui->renderer, texture, NULL, &text_rect);
 }
 
+void draw_sync_info(UIInfo *ui, UIDisplayData *uuid) {
+  char buf[1024];
+  snprintf(buf, sizeof(buf),
+      "Syncing  %d - pos/len -> %10d/%10d",
+      uuid->sync_state, uuid->sync_pos, uuid->sync_length);
+  SDL_Color col = {255, 255, 255};
+  SDL_Surface* surface = TTF_RenderText_Solid(ui->font, buf, col);
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(ui->renderer, surface);
+  SDL_Rect text_rect = { 0, (uuid->track_count + 1) * ui->font_size, 0, 0 };
+  SDL_QueryTexture(texture, NULL, NULL, &(text_rect.w), &(text_rect.h));
+  SDL_RenderCopy(ui->renderer, texture, NULL, &text_rect);
+}
+
 void ui_draw(AppState *app, UIDisplayData *uuid) {
   UIInfo *ui = app->ui;
   SDL_RenderClear(ui->renderer);
@@ -37,6 +50,7 @@ void ui_draw(AppState *app, UIDisplayData *uuid) {
   for (uint8_t i = 0; i < app->glacier->track_count; i++) {
     draw_track_info(ui, i, uuid->track_info[i]);
   }
+  draw_sync_info(ui, uuid);
 
   SDL_RenderPresent(ui->renderer);
 }

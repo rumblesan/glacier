@@ -64,6 +64,9 @@ void glacier_report(GlacierAudio *gs, UIDisplayData *uuid) {
     uuid->track_info[i]->playback_head_pos = gs->loop_tracks[i]->buffer->playback_head_pos;
     uuid->track_info[i]->record_head_pos = gs->loop_tracks[i]->buffer->record_head_pos;
   }
+  uuid->sync_state = gs->syncer->state;
+  uuid->sync_length = gs->syncer->sync_length;
+  uuid->sync_pos = gs->syncer->sync_count;
 }
 
 void glacier_destroy(GlacierAudio *gs) {
