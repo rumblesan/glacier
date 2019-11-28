@@ -43,11 +43,10 @@ void draw_sync_info(UIInfo *ui, UIDisplayData *uuid) {
   SDL_RenderCopy(ui->renderer, texture, NULL, &text_rect);
 }
 
-void ui_draw(AppState *app, UIDisplayData *uuid) {
-  UIInfo *ui = app->ui;
+void ui_draw(UIInfo *ui, UIDisplayData *uuid) {
   SDL_RenderClear(ui->renderer);
 
-  for (uint8_t i = 0; i < app->glacier->track_count; i++) {
+  for (uint8_t i = 0; i < uuid->track_count; i++) {
     draw_track_info(ui, i, uuid->track_info[i]);
   }
   draw_sync_info(ui, uuid);
@@ -63,7 +62,6 @@ void ui_display(AppState *app) {
     "Couldn't start UI querying"
   );
   UIDisplayData *query = NULL;
-
 
   SDL_Event e;
 
@@ -81,7 +79,7 @@ void ui_display(AppState *app) {
         &query
       )
     ) {
-      ui_draw(app, query);
+      ui_draw(app->ui, query);
       ck_ring_enqueue_spsc(
         app->ui_query_bus,
         app->ui_query_bus_buffer,
