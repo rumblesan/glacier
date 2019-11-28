@@ -40,6 +40,7 @@ static int audioCB(
   memcpy(out, in, framesPerBuffer * 2 * sizeof(SAMPLE));
 
   ControlMessage *new_control_message = NULL;
+  UIDisplayData *query = NULL;
 
   while (
     ck_ring_dequeue_spsc(
@@ -59,6 +60,21 @@ static int audioCB(
     );
   }
   glacier_handle_audio(app->glacier, in, out, framesPerBuffer);
+
+  if (
+    ck_ring_dequeue_spsc(
+      app->ui_query_bus,
+      app->ui_query_bus_buffer,
+      &query
+    )
+  ) {
+    glacier_report(app->glacier, query);
+    ck_ring_enqueue_spsc(
+      app->ui_query_bus,
+      app->ui_query_bus_buffer,
+      query
+    );
+  }
 
   return paContinue;
 }

@@ -17,30 +17,31 @@
 #include "core/control_message.h"
 #include "core/loop_track.h"
 
+void draw_track_info(UIInfo *ui, uint8_t track_number, TrackUIDisplay *info) {
+  char buf[1024];
+  snprintf(buf, sizeof(buf),
+      "Track %d: state %d - length -> %d",
+      track_number, info->state, info->length);
+  SDL_Color col = {255, 255, 255};
+  SDL_Surface* surface = TTF_RenderText_Solid(ui->font, buf, col);
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(ui->renderer, surface);
+  SDL_Rect text_rect = { 0, track_number * ui->font_size, 0, 0 };
+  SDL_QueryTexture(texture, NULL, NULL, &(text_rect.w), &(text_rect.h));
+  SDL_RenderCopy(ui->renderer, texture, NULL, &text_rect);
+}
 
-void ui_draw(UIInfo *ui, UIDisplayData *uuid) {
+void ui_draw(AppState *app, UIDisplayData *uuid) {
+  UIInfo *ui = app->ui;
   SDL_RenderClear(ui->renderer);
 
-  SDL_Color White = {255, 255, 255};
-  SDL_Surface* surfaceMessage = TTF_RenderText_Solid(
-    ui->font, "put your text here", White
-  );
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(
-    ui->renderer, surfaceMessage
-  );
-
-  int texW = 0;
-  int texH = 0;
-  SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
-  SDL_Rect text_rect = { 0, 0, texW, texH };
-
-  SDL_RenderCopy(ui->renderer, texture, NULL, &text_rect);
+  for (uint8_t i = 0; i < app->glacier->track_count; i++) {
+    draw_track_info(ui, i, uuid->track_info[i]);
+  }
 
   SDL_RenderPresent(ui->renderer);
 }
 
 void ui_display(AppState *app) {
-  UIInfo *ui = app->ui;
 
   UIDisplayData *uuid = ui_display_create(app->glacier->track_count);
   check(
@@ -72,7 +73,7 @@ void ui_display(AppState *app) {
         &query
       )
     ) {
-      ui_draw(ui, query);
+      ui_draw(app, query);
       ck_ring_enqueue_spsc(
         app->ui_query_bus,
         app->ui_query_bus_buffer,

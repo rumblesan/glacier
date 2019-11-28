@@ -17,6 +17,8 @@ UIInfo *ui_create(
   UIInfo *ui = malloc(sizeof(UIInfo));
   check_mem(ui);
 
+  ui->font_size = font_size;
+
   check(SDL_Init(SDL_INIT_VIDEO) == 0, "could not init SDL");
   check(TTF_Init() == 0, "could not init True Type Font");
 

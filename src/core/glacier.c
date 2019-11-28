@@ -55,6 +55,17 @@ void glacier_handle_audio(GlacierAudio *glacier, const SAMPLE *input_samples, SA
   }
 }
 
+void glacier_report(GlacierAudio *gs, UIDisplayData *uuid) {
+  // TODO make this safer?
+  for (uint8_t i = 0; i < gs->track_count; i++) {
+    uuid->track_info[i]->state = gs->loop_tracks[i]->state;
+    uuid->track_info[i]->channels = gs->loop_tracks[i]->buffer->channels;
+    uuid->track_info[i]->length = gs->loop_tracks[i]->buffer->length;
+    uuid->track_info[i]->playback_head_pos = gs->loop_tracks[i]->buffer->playback_head_pos;
+    uuid->track_info[i]->record_head_pos = gs->loop_tracks[i]->buffer->record_head_pos;
+  }
+}
+
 void glacier_destroy(GlacierAudio *gs) {
   check(gs != NULL, "Invalid Glacier State");
 

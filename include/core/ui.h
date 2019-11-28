@@ -8,6 +8,7 @@
 typedef struct UIInfo {
 
   uint8_t track_count;
+  uint8_t font_size;
 
   SDL_Window *window;
   SDL_Renderer *renderer;
