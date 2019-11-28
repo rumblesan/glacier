@@ -20,8 +20,8 @@
 void draw_track_info(UIInfo *ui, uint8_t track_number, TrackUIDisplay *info) {
   char buf[1024];
   snprintf(buf, sizeof(buf),
-      "Track %d: state %d - length -> %d",
-      track_number, info->state, info->length);
+      "Track %d %d - pos/len -> %10d/%10d",
+      track_number, info->state, info->playback_head_pos, info->length);
   SDL_Color col = {255, 255, 255};
   SDL_Surface* surface = TTF_RenderText_Solid(ui->font, buf, col);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(ui->renderer, surface);
