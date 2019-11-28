@@ -30,6 +30,8 @@ typedef struct SyncControl {
 
 } SyncControl;
 
+const char *sc_state_string(SyncControlState state);
+
 SyncControl *sc_create(LoopTrack **loop_tracks, uint8_t track_count);
 
 SyncTimingMessage sc_keep_sync(SyncControl *sc, uint32_t count_increase);

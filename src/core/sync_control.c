@@ -9,6 +9,14 @@
 #include "core/loop_track.h"
 #include "core/sync_timing_message.h"
 
+const char *SyncStateStrings[] = {
+    "Empty", "Running", "Stopped",
+};
+
+const char *sc_state_string(SyncControlState state) {
+  return SyncStateStrings[state];
+}
+
 SyncControl *sc_create(LoopTrack **loop_tracks, uint8_t track_count) {
   SyncControl *sc = malloc(sizeof(SyncControl));
   check_mem(sc);

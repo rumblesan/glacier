@@ -20,8 +20,8 @@
 void draw_track_info(UIInfo *ui, uint8_t track_number, TrackUIDisplay *info) {
   char buf[1024];
   snprintf(buf, sizeof(buf),
-      "Track %d %d - pos/len -> %10d/%10d",
-      track_number, info->state, info->playback_head_pos, info->length);
+      "Track %d %10s - pos/len -> %10d/%10d",
+      track_number, lt_state_string(info->state), info->playback_head_pos, info->length);
   SDL_Color col = {255, 255, 255};
   SDL_Surface* surface = TTF_RenderText_Solid(ui->font, buf, col);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(ui->renderer, surface);
@@ -33,8 +33,8 @@ void draw_track_info(UIInfo *ui, uint8_t track_number, TrackUIDisplay *info) {
 void draw_sync_info(UIInfo *ui, UIDisplayData *uuid) {
   char buf[1024];
   snprintf(buf, sizeof(buf),
-      "Syncing  %d - pos/len -> %10d/%10d",
-      uuid->sync_state, uuid->sync_pos, uuid->sync_length);
+      "Syncing %10s - pos/len -> %10d/%10d",
+      sc_state_string(uuid->sync_state), uuid->sync_pos, uuid->sync_length);
   SDL_Color col = {255, 255, 255};
   SDL_Surface* surface = TTF_RenderText_Solid(ui->font, buf, col);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(ui->renderer, surface);

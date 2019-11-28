@@ -8,6 +8,14 @@
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
+const char *LoopTrackStateStrings[] = {
+    "Error", "Stopped", "Armed", "Cued", "Recording", "Concluding", "Playing", "Overdubbing",
+};
+
+const char *lt_state_string(LoopTrackState state) {
+  return LoopTrackStateStrings[state];
+}
+
 LoopTrack *lt_create(uint8_t buffer_id, uint32_t max_length, uint8_t channels) {
   LoopTrack *lt = calloc(1, sizeof(LoopTrack));
   check_mem(lt);
