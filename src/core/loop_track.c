@@ -133,6 +133,7 @@ LoopTrackState _lt_playing_handle_action(LoopTrack *lt, LoopTrackAction action) 
   switch(action) {
     case LoopTrack_Action_Playback:
       // TODO possibly going to need some sync timing logic here?
+      ab_stop_playing(lt->buffer);
       lt->state = LoopTrack_State_Stopped;
       break;
     case LoopTrack_Action_Record:

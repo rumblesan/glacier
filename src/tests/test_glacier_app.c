@@ -135,6 +135,26 @@ void test_glacier_multiple_track_record() {
   mu_assert(lt_playhead_pos(glacier_track(glacier, 1)) == 25, "Loop track 1 playback head pos should be 25");
   mu_assert(lt_length(glacier_track(glacier, 1)) == glacier->syncer->half_length, "Track 1 should have the same length as the syncer");
 
+  glacier_handle_audio(glacier, input_audio, output_audio, 150);
+  glacier_handle_audio(glacier, input_audio, output_audio, 100);
+
+  cm->track_number = 1;
+  cm->action = LoopTrack_Action_Playback;
+  glacier_handle_command(glacier, cm);
+  mu_assert(glacier_track(glacier, 1)->state == LoopTrack_State_Stopped, "Loop track 1 should be Stopped");
+
+  glacier_handle_audio(glacier, input_audio, output_audio, 150);
+
+  cm->track_number = 1;
+  cm->action = LoopTrack_Action_Playback;
+  glacier_handle_command(glacier, cm);
+  mu_assert(glacier_track(glacier, 1)->state == LoopTrack_State_Cued, "Loop track 1 should be Cued");
+
+  glacier_handle_audio(glacier, input_audio, output_audio, 60);
+  mu_assert(glacier_track(glacier, 1)->state == LoopTrack_State_Playing, "Loop track 1 should be Playing");
+  mu_assert(glacier->syncer->sync_count == 35, "Syncer should have a count of %d not %d", 35, glacier->syncer->sync_count);
+  mu_assert(lt_playhead_pos(glacier_track(glacier, 1)) == 35, "Loop track 1 playback head pos should be 35 not %d", lt_playhead_pos(glacier_track(glacier, 1)));
+  mu_assert(lt_length(glacier_track(glacier, 1)) == glacier->syncer->half_length, "Track 1 should have the same length as the syncer");
 
   cm_destroy(cm);
   glacier_destroy(glacier);

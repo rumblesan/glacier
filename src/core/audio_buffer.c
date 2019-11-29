@@ -40,6 +40,10 @@ void ab_cancel_recording(AudioBuffer *ab) {
   ab->playback_head_pos = 0;
 }
 
+void ab_stop_playing(AudioBuffer *ab) {
+  ab->playback_head_pos = 0;
+}
+
 bool ab_record(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_count) {
 
   bool still_recording = true;
