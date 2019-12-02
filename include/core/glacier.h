@@ -27,7 +27,7 @@ LoopTrack *glacier_track(GlacierAudio *glacier, uint8_t track_id);
 
 void glacier_handle_command(GlacierAudio *glacier, ControlMessage *msg);
 
-void glacier_handle_audio(GlacierAudio *gs, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count);
+void glacier_handle_audio(GlacierAudio *gs, const SAMPLE **input_samples, SAMPLE **output_samples, uint32_t frame_count);
 
 void glacier_report(GlacierAudio *gs, UIDisplayData *uuid);
 

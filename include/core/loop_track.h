@@ -62,6 +62,6 @@ uint32_t lt_recordhead_pos(LoopTrack *lc);
 
 uint32_t lt_playhead_pos(LoopTrack *lc);
 
-LoopTrackStateChange lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE *input_samples, SAMPLE *output_samples, uint32_t frame_count);
+LoopTrackStateChange lt_handle_audio(LoopTrack *lc, SyncTimingMessage sync_message, const SAMPLE **input_samples, SAMPLE **output_samples, uint32_t frame_count);
 
 void lt_destroy(LoopTrack *lc);

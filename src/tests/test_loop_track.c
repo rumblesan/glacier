@@ -21,8 +21,12 @@ void test_loop_track_state_changes() {
   uint8_t channels = 2;
   uint32_t frame_count = 64;
 
-  SAMPLE *input_audio = calloc(frame_count * channels, sizeof(SAMPLE));
-  SAMPLE *output_audio = calloc(frame_count * channels, sizeof(SAMPLE));
+  const SAMPLE **input_audio = calloc(channels, sizeof(SAMPLE *));
+  SAMPLE **output_audio = calloc(channels, sizeof(SAMPLE *));
+  for (uint8_t c = 0; c < channels; c++) {
+    input_audio[c] = calloc(frame_count, sizeof(SAMPLE));
+    output_audio[c] = calloc(frame_count, sizeof(SAMPLE));
+  }
 
   LoopTrack *loop_track = lt_create(0, 2048, channels);
   mu_assert(loop_track != NULL, "Could not create Loop Track");
@@ -95,8 +99,12 @@ void test_loop_track_cancel_recording() {
   uint8_t channels = 2;
   uint32_t frame_count = 64;
 
-  SAMPLE *input_audio = calloc(frame_count * channels, sizeof(SAMPLE));
-  SAMPLE *output_audio = calloc(frame_count * channels, sizeof(SAMPLE));
+  const SAMPLE **input_audio = calloc(channels, sizeof(SAMPLE *));
+  SAMPLE **output_audio = calloc(channels, sizeof(SAMPLE *));
+  for (uint8_t c = 0; c < channels; c++) {
+    input_audio[c] = calloc(frame_count, sizeof(SAMPLE));
+    output_audio[c] = calloc(frame_count, sizeof(SAMPLE));
+  }
 
   LoopTrack *loop_track = lt_create(0, 2048, channels);
   mu_assert(loop_track != NULL, "Could not create Loop Track");

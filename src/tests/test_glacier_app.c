@@ -23,8 +23,12 @@ void test_glacier_startup() {
   uint8_t frames_recorded = 0;
   GlacierAudio *glacier = glacier_create(track_count, max_buffer_length, channels);
 
-  const SAMPLE *input_audio = calloc(frame_count * channels, sizeof(SAMPLE));
-  SAMPLE *output_audio = calloc(frame_count * channels, sizeof(SAMPLE));
+  const SAMPLE **input_audio = calloc(channels, sizeof(SAMPLE *));
+  SAMPLE **output_audio = calloc(channels, sizeof(SAMPLE *));
+  for (uint8_t c = 0; c < channels; c++) {
+    input_audio[c] = calloc(frame_count, sizeof(SAMPLE));
+    output_audio[c] = calloc(frame_count, sizeof(SAMPLE));
+  }
 
   ControlMessage *cm = cm_create(0, LoopTrack_Action_Record);
   mu_assert(glacier->syncer->state == SyncControl_State_Empty, "Syncer should be empty");
@@ -70,8 +74,12 @@ void test_glacier_multiple_track_record() {
   uint8_t channels = 2;
   GlacierAudio *glacier = glacier_create(track_count, max_buffer_length, channels);
 
-  const SAMPLE *input_audio = calloc(3000 * channels, sizeof(SAMPLE));
-  SAMPLE *output_audio = calloc(3000 * channels, sizeof(SAMPLE));
+  const SAMPLE **input_audio = calloc(channels, sizeof(SAMPLE *));
+  SAMPLE **output_audio = calloc(channels, sizeof(SAMPLE *));
+  for (uint8_t c = 0; c < channels; c++) {
+    input_audio[c] = calloc(max_buffer_length, sizeof(SAMPLE));
+    output_audio[c] = calloc(max_buffer_length, sizeof(SAMPLE));
+  }
 
   mu_assert(glacier->syncer->state == SyncControl_State_Empty, "Syncer should be empty");
 

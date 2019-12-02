@@ -18,7 +18,6 @@
 #include "core/loop_track.h"
 
 #define SAMPLE_RATE         (48000)
-#define PA_SAMPLE_TYPE      paFloat32
 #define FRAMES_PER_BUFFER   (64)
 
 
@@ -30,14 +29,16 @@ static int audioCB(
   PaStreamCallbackFlags statusFlags,
   void *userData
 ) {
-  SAMPLE *out = (SAMPLE*)outputBuffer;
-  const SAMPLE *in = (const SAMPLE*)inputBuffer;
+  SAMPLE **out = (SAMPLE**)outputBuffer;
+  const SAMPLE **in = (const SAMPLE**)inputBuffer;
   AppState *app = (AppState*)userData;
 
   (void) timeInfo;
   (void) statusFlags;
 
-  memcpy(out, in, framesPerBuffer * 2 * sizeof(SAMPLE));
+  for (uint8_t c = 0; c < 2; c++) {
+    memcpy(out[c], in[c], framesPerBuffer * sizeof(SAMPLE));
+  }
 
   ControlMessage *new_control_message = NULL;
   UIDisplayData *query = NULL;
@@ -122,7 +123,7 @@ int main(void) {
   inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
   check (inputParameters.device != paNoDevice, "Error: No default input device.");
   inputParameters.channelCount = 2;       /* stereo input */
-  inputParameters.sampleFormat = PA_SAMPLE_TYPE;
+  inputParameters.sampleFormat = paFloat32 | paNonInterleaved;
   inputParameters.suggestedLatency = Pa_GetDeviceInfo( inputParameters.device )->defaultLowInputLatency;
   inputParameters.hostApiSpecificStreamInfo = NULL;
 
@@ -130,7 +131,7 @@ int main(void) {
   check (outputParameters.device != paNoDevice, "Error: No default output device.")
 
   outputParameters.channelCount = 2;       /* stereo output */
-  outputParameters.sampleFormat = PA_SAMPLE_TYPE;
+  outputParameters.sampleFormat = paFloat32 | paNonInterleaved;
   outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
   outputParameters.hostApiSpecificStreamInfo = NULL;
 

@@ -6,7 +6,7 @@
 #include "core/types.h"
 
 typedef struct AudioBuffer {
-  SAMPLE *samples;
+  SAMPLE **samples;
 
   uint32_t playback_head_pos;
   uint32_t record_head_pos;
@@ -25,10 +25,10 @@ void ab_cancel_recording(AudioBuffer *ab);
 
 void ab_stop_playing(AudioBuffer *ab);
 
-bool ab_record(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_count);
+bool ab_record(AudioBuffer *ab, const SAMPLE **input_samples, uint32_t frame_count, uint32_t offset);
 
-bool ab_overdub(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_count);
+bool ab_overdub(AudioBuffer *ab, const SAMPLE **input_samples, uint32_t frame_count, uint32_t offset);
 
-void ab_playback_mix(AudioBuffer *ab, SAMPLE *output_samples, uint32_t frame_count);
+void ab_playback_mix(AudioBuffer *ab, SAMPLE **output_samples, uint32_t frame_count, uint32_t offset);
 
 void ab_destroy(AudioBuffer *ab);

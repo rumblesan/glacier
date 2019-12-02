@@ -12,7 +12,10 @@ AudioBuffer *ab_create(uint32_t max_length, uint8_t channels) {
   AudioBuffer *ab = calloc(1, sizeof(AudioBuffer));
   check_mem(ab);
 
-  SAMPLE *samples = calloc(max_length * channels, sizeof(SAMPLE));
+  SAMPLE **samples = calloc(channels, sizeof(SAMPLE *));
+  for (uint8_t i = 0; i < channels; i++) {
+    samples[i] = calloc(max_length, sizeof(SAMPLE));
+  }
   check_mem(samples);
   ab->samples = samples;
 
@@ -44,7 +47,7 @@ void ab_stop_playing(AudioBuffer *ab) {
   ab->playback_head_pos = 0;
 }
 
-bool ab_record(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_count) {
+bool ab_record(AudioBuffer *ab, const SAMPLE **input_samples, uint32_t frame_count, uint32_t offset) {
 
   bool still_recording = true;
 
@@ -53,8 +56,10 @@ bool ab_record(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_coun
     frame_count = ab->max_length - ab->record_head_pos;
   }
 
-  uint32_t bytes = frame_count * ab->channels * sizeof(SAMPLE);
-  memcpy(ab->samples + (ab->record_head_pos * ab->channels), input_samples, bytes);
+  uint32_t bytes = frame_count * sizeof(SAMPLE);
+  for (uint32_t c = 0; c < ab->channels; c++) {
+    memcpy(ab->samples[c] + ab->record_head_pos, input_samples[c] + offset, bytes);
+  }
   ab->record_head_pos += frame_count;
 
   if (!still_recording) {
@@ -64,7 +69,7 @@ bool ab_record(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_coun
   return still_recording;
 }
 
-bool ab_overdub(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_count) {
+bool ab_overdub(AudioBuffer *ab, const SAMPLE **input_samples, uint32_t frame_count, uint32_t offset) {
 
   bool still_recording = true;
 
@@ -73,33 +78,33 @@ bool ab_overdub(AudioBuffer *ab, const SAMPLE *input_samples, uint32_t frame_cou
     frame_count = ab->max_length - ab->record_head_pos;
   }
 
-  uint32_t sample_count = frame_count * ab->channels;
-  uint32_t record_head_sample = ab->record_head_pos * ab->channels;
-  for (uint32_t i = 0; i < sample_count; i++) {
-    ab->samples[record_head_sample + i] += input_samples[i];
+  for (uint32_t c = 0; c < ab->channels; c++) {
+    for (uint32_t i = 0; i < frame_count; i++) {
+      ab->samples[c][ab->record_head_pos + i] += input_samples[c][i + offset];
+    }
   }
   ab->record_head_pos += frame_count;
 
   return still_recording;
 }
 
-void ab_playback_mix(AudioBuffer *ab, SAMPLE *output_samples, uint32_t frame_count) {
+void ab_playback_mix(AudioBuffer *ab, SAMPLE **output_samples, uint32_t frame_count, uint32_t offset) {
   if (ab->length <= 0) { return; }
 
-  uint32_t sample_count = frame_count * ab->channels;
-  uint32_t playback_sample_pos = ab->playback_head_pos * ab->channels;
-  uint32_t sample_length = ab->length * ab->channels;
-
-  if (playback_sample_pos + sample_count >= sample_length) {
+  if (ab->playback_head_pos + frame_count >= ab->length) {
     uint32_t pos = 0;
-    for (uint32_t i = 0; i < sample_count; i++) {
-      pos = (playback_sample_pos + i) % sample_length;
-      output_samples[i] += ab->samples[pos];
+    for (uint32_t c = 0; c < ab->channels; c++) {
+      for (uint32_t i = 0; i < frame_count; i++) {
+        pos = (ab->playback_head_pos + i) % ab->length;
+        output_samples[c][i + offset] += ab->samples[c][pos];
+      }
     }
     ab->playback_head_pos = (ab->playback_head_pos + frame_count) % ab->length;
   } else {
-    for (uint32_t i = 0; i < sample_count; i++) {
-      output_samples[i] += ab->samples[playback_sample_pos + i];
+    for (uint32_t c = 0; c < ab->channels; c++) {
+      for (uint32_t i = 0; i < frame_count; i++) {
+        output_samples[c][i + offset] += ab->samples[c][ab->playback_head_pos + i];
+      }
     }
     ab->playback_head_pos += frame_count;
   }
@@ -108,6 +113,9 @@ void ab_playback_mix(AudioBuffer *ab, SAMPLE *output_samples, uint32_t frame_cou
 void ab_destroy(AudioBuffer *ab) {
   check(ab != NULL, "Invalid Audio Buffer");
   check(ab->samples != NULL, "Invalid samples in Audio Buffer");
+  for (uint8_t i = 0; i < ab->channels; i++) {
+    free(ab->samples[i]);
+  }
   free(ab->samples);
   free(ab);
   return;
