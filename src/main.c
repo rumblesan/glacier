@@ -15,6 +15,7 @@
 #include "core/osc_server.h"
 #include "core/glacier.h"
 #include "core/control_message.h"
+#include "core/audio_bus.h"
 #include "core/loop_track.h"
 
 #define SAMPLE_RATE         (48000)
@@ -135,12 +136,15 @@ int main(void) {
   outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
   outputParameters.hostApiSpecificStreamInfo = NULL;
 
-  uint8_t record_buffer_count = 3;
+  uint8_t loop_track_count = 3;
   uint32_t record_buffer_length = 30;
   uint8_t record_buffer_channels = 2;
 
+  AudioBus *input_bus = abus_create(2, 0);
+
   GlacierAudio *glacier = glacier_create(
-    record_buffer_count,
+    input_bus,
+    loop_track_count,
     record_buffer_length * SAMPLE_RATE,
     record_buffer_channels
   );

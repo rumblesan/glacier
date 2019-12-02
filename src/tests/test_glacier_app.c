@@ -9,7 +9,14 @@ void test_glacier_app_create() {
   uint8_t track_count = 3;
   uint32_t max_buffer_length = 4000;
   uint8_t channels = 2;
-  GlacierAudio *glacier = glacier_create(track_count, max_buffer_length, channels);
+  AudioBus *input_bus = abus_create(2, 0);
+
+  GlacierAudio *glacier = glacier_create(
+    input_bus,
+    track_count,
+    max_buffer_length,
+    channels
+  );
 
   glacier_destroy(glacier);
 }
@@ -21,7 +28,14 @@ void test_glacier_startup() {
   uint8_t channels = 2;
   uint32_t frame_count = 64;
   uint8_t frames_recorded = 0;
-  GlacierAudio *glacier = glacier_create(track_count, max_buffer_length, channels);
+  AudioBus *input_bus = abus_create(2, 0);
+
+  GlacierAudio *glacier = glacier_create(
+    input_bus,
+    track_count,
+    max_buffer_length,
+    channels
+  );
 
   const SAMPLE **input_audio = calloc(channels, sizeof(SAMPLE *));
   SAMPLE **output_audio = calloc(channels, sizeof(SAMPLE *));
@@ -72,7 +86,14 @@ void test_glacier_multiple_track_record() {
   uint8_t track_count = 3;
   uint32_t max_buffer_length = 4000;
   uint8_t channels = 2;
-  GlacierAudio *glacier = glacier_create(track_count, max_buffer_length, channels);
+  AudioBus *input_bus = abus_create(2, 0);
+
+  GlacierAudio *glacier = glacier_create(
+    input_bus,
+    track_count,
+    max_buffer_length,
+    channels
+  );
 
   const SAMPLE **input_audio = calloc(channels, sizeof(SAMPLE *));
   SAMPLE **output_audio = calloc(channels, sizeof(SAMPLE *));

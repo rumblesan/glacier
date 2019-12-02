@@ -8,22 +8,30 @@
 #include "core/types.h"
 #include "core/sync_control.h"
 #include "core/loop_track.h"
-#include "core/audio_buffer.h"
+#include "core/audio_bus.h"
 #include "core/control_message.h"
 #include "core/sync_timing_message.h"
 
-GlacierAudio *glacier_create(uint8_t track_count, uint32_t max_buffer_length, uint8_t channels) {
+GlacierAudio *glacier_create(
+  AudioBus *input_bus,
+  uint8_t track_count,
+  uint32_t max_buffer_length,
+  uint8_t track_buffer_channels
+) {
 
   GlacierAudio *gs = malloc(sizeof(GlacierAudio));
   check_mem(gs);
 
   gs->track_count = track_count;
-  gs->channels = channels;
+  gs->channels = track_buffer_channels;
+
+  gs->input_bus = input_bus;
+  check(gs->input_bus != NULL, "Invalid Input Bus");
 
   gs->loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
   check_mem(gs->loop_tracks);
   for (uint8_t i = 0; i < track_count; i++) {
-    gs->loop_tracks[i] = lt_create(i, max_buffer_length, channels);
+    gs->loop_tracks[i] = lt_create(i, max_buffer_length, track_buffer_channels);
     check_mem(gs->loop_tracks[i]);
   }
 

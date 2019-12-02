@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
     printf("\n*****************\n\n");
 
     mu_run_suite(test_audio_buffer, "Audio Buffer");
+    mu_run_suite(test_audio_bus, "Audio Bus");
     mu_run_suite(test_control_message, "Control Message");
     mu_run_suite(test_sync_control, "Sync Control");
     mu_run_suite(test_loop_track, "Loop Track");
