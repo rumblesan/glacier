@@ -16,11 +16,6 @@
 #include "core/glacier.h"
 #include "core/control_message.h"
 #include "core/audio_bus.h"
-#include "core/loop_track.h"
-
-#define SAMPLE_RATE         (48000)
-#define FRAMES_PER_BUFFER   (64)
-
 
 static int audioCB(
   const void *inputBuffer,
@@ -33,9 +28,6 @@ static int audioCB(
   SAMPLE **out = (SAMPLE**)outputBuffer;
   const SAMPLE **in = (const SAMPLE**)inputBuffer;
   AppState *app = (AppState*)userData;
-
-  (void) timeInfo;
-  (void) statusFlags;
 
   for (uint8_t c = 0; c < 2; c++) {
     memcpy(out[c], in[c], framesPerBuffer * sizeof(SAMPLE));
@@ -51,10 +43,7 @@ static int audioCB(
       &new_control_message
     ) == true
   ) {
-    glacier_handle_command(
-      app->glacier,
-      new_control_message
-    );
+    glacier_handle_command(app->glacier, new_control_message);
     ck_ring_enqueue_spsc(
       app->control_bus_garbage,
       app->control_bus_garbage_buffer,
@@ -109,97 +98,120 @@ void *garbage_collector(void *_app) {
 
 /*******************************************************************/
 int main(void) {
-  PaStreamParameters inputParameters, outputParameters;
-  PaStream *stream;
-  PaError err;
-
+  // Glacier variables
+  const AudioBus *input_bus = abus_create(AudioBus_Stereo, 0);
+  UIInfo *ui = NULL;
+  GlacierAudio *glacier = NULL;
+  AppState *app = NULL;
   OSCServer osc_server = NULL;
 
   pthread_t garbage_thread;
   pthread_attr_t garbage_thread_attr;
 
-  err = Pa_Initialize();
-  check(err == paNoError, "could not initialize port audio");
+  uint32_t sample_rate = 48000;
+  uint8_t loop_track_count = 3;
+  uint32_t record_buffer_length = 30;
+  uint8_t record_buffer_channels = 2;
+
+  // Port Audio variables
+  PaStreamParameters inputParameters, outputParameters;
+  PaError portAudioErr;
+  PaStream *stream;
+
+  // Setup
+  portAudioErr = Pa_Initialize();
+  check(portAudioErr == paNoError, "Could not initialize Port Audio");
 
   inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
-  check (inputParameters.device != paNoDevice, "Error: No default input device.");
+  check(inputParameters.device != paNoDevice, "No default input device.");
   inputParameters.channelCount = 2;       /* stereo input */
   inputParameters.sampleFormat = paFloat32 | paNonInterleaved;
   inputParameters.suggestedLatency = Pa_GetDeviceInfo( inputParameters.device )->defaultLowInputLatency;
   inputParameters.hostApiSpecificStreamInfo = NULL;
 
   outputParameters.device = Pa_GetDefaultOutputDevice(); /* default output device */
-  check (outputParameters.device != paNoDevice, "Error: No default output device.")
+  check(outputParameters.device != paNoDevice, "No default output device.")
 
   outputParameters.channelCount = 2;       /* stereo output */
   outputParameters.sampleFormat = paFloat32 | paNonInterleaved;
   outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
   outputParameters.hostApiSpecificStreamInfo = NULL;
 
-  uint8_t loop_track_count = 3;
-  uint32_t record_buffer_length = 30;
-  uint8_t record_buffer_channels = 2;
-
-  const AudioBus *input_bus = abus_create(AudioBus_Stereo, 0);
-
-  GlacierAudio *glacier = glacier_create(
+  glacier = glacier_create(
     input_bus,
     loop_track_count,
-    record_buffer_length * SAMPLE_RATE,
+    record_buffer_length * sample_rate,
     record_buffer_channels
   );
 
-  UIInfo *ui = ui_create("Glacier", "arial.ttf", 24);
+  ui = ui_create("Glacier", "arial.ttf", 24);
 
-  AppState *app = app_state_create(glacier, ui);
+  app = app_state_create(glacier, ui);
 
   osc_server = osc_start_server(app);
 
   debug("Starting garbage collector\n");
   check(!pthread_attr_init(&garbage_thread_attr),
-        "Error setting reader thread attributes");
+        "Error setting garbage collector thread attributes");
   check(!pthread_attr_setdetachstate(&garbage_thread_attr, PTHREAD_CREATE_DETACHED),
-        "Error setting reader thread detach state");
+        "Error setting garbage collector thread detach state");
   check(!pthread_create(&garbage_thread,
                         &garbage_thread_attr,
                         &garbage_collector,
                         app),
-        "Error creating file reader thread");
+        "Error creating garbage collector thread");
 
-  err = Pa_OpenStream(
+  portAudioErr = Pa_OpenStream(
     &stream,
     &inputParameters,
     &outputParameters,
-    SAMPLE_RATE,
-    FRAMES_PER_BUFFER,
+    sample_rate,
+    64,
     0,
     audioCB,
     app
   );
-  check(err == paNoError, "could not open stream");
+  check(portAudioErr == paNoError, "Could not open stream");
 
-  err = Pa_StartStream( stream );
-  check(err == paNoError, "could not start stream");
+  portAudioErr = Pa_StartStream( stream );
+  check(portAudioErr == paNoError, "Could not start stream");
 
+  // UI blocks main thread
   ui_display(app);
 
-  err = Pa_CloseStream( stream );
-  check(err == paNoError, "could not close stream");
+  // tidy up
+  portAudioErr = Pa_CloseStream( stream );
+  check(portAudioErr == paNoError, "Could not close stream");
 
-  printf("Finished.");
   osc_stop_server(osc_server);
+  app_state_destroy(app);
+  glacier_destroy(glacier);
+  ui_destroy(ui);
+  abus_destroy(input_bus);
   Pa_Terminate();
+
   TTF_Quit();
   SDL_Quit();
+
+  printf("Finished.");
   return 0;
 
 error:
-  osc_stop_server(osc_server);
-  Pa_Terminate();
+  if (osc_server != NULL) { osc_stop_server(osc_server); }
+  if (app != NULL) { app_state_destroy(app); }
+  if (glacier != NULL) { glacier_destroy(glacier); }
+  if (ui != NULL) { ui_destroy(ui); }
+  if (input_bus != NULL) { abus_destroy(input_bus); }
+
   TTF_Quit();
   SDL_Quit();
-  fprintf( stderr, "An error occured while using the portaudio stream\n" );
-  fprintf( stderr, "Error number: %d\n", err );
-  fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
+
+  // port audio error handling
+  if (portAudioErr != paNoError) {
+    fprintf( stderr, "An error occured while using the portaudio stream\n");
+    fprintf( stderr, "Error number: %d\n", portAudioErr);
+    fprintf( stderr, "Error message: %s\n", Pa_GetErrorText(portAudioErr));
+  }
+  Pa_Terminate();
   return -1;
 }
