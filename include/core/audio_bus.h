@@ -12,6 +12,6 @@ typedef struct AudioBus {
   uint8_t first_channel;
 } AudioBus;
 
-const AudioBus *abus_create(AudioBusChannelCount channel_count, uint8_t first_channel);
+AudioBus *abus_create(AudioBusChannelCount channel_count, uint8_t first_channel);
 
-void abus_destroy(const AudioBus *ab);
+void abus_destroy(AudioBus *ab);

@@ -13,6 +13,7 @@ An audio looper
 * SDL2
 * SDL2 TTF
   - Freetype
+* libconfig
 
 ## Contact
 

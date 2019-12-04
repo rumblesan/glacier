@@ -8,6 +8,7 @@
 #include "dbg.h"
 
 #include "core/types.h"
+#include "core/config.h"
 #include "core/app.h"
 #include "core/ui.h"
 #include "core/ui_coms.h"
@@ -135,9 +136,12 @@ error:
 }
 
 /*******************************************************************/
-int main(void) {
+int main (int argc, char *argv[]) {
   // Glacier variables
-  const AudioBus *input_bus = abus_create(AudioBus_Mono, 0);
+
+  GlacierCfg *cfg = NULL;
+
+  AudioBus *input_bus = NULL;
   UIInfo *ui = NULL;
   GlacierAudio *glacier = NULL;
   AppState *app = NULL;
@@ -153,8 +157,15 @@ int main(void) {
 
   // Port Audio variables
   PaStreamParameters inputParameters, outputParameters;
-  PaError portAudioErr;
+  PaError portAudioErr = paNoError;
   PaStream *stream;
+
+  char *config_path = argv[1];
+
+  cfg = cfg_read(config_path);
+  check(cfg != NULL, "Could not read config file");
+
+  input_bus = abus_create(cfg->input_bus_channels, cfg->input_bus);
 
   // Setup
   portAudioErr = Pa_Initialize();
@@ -226,6 +237,7 @@ int main(void) {
   glacier_destroy(glacier);
   ui_destroy(ui);
   abus_destroy(input_bus);
+  cfg_destroy(cfg);
   Pa_Terminate();
 
   TTF_Quit();

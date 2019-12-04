@@ -3,7 +3,7 @@ CFLAGS            = -Wall -g
 SDLFLAGS          = `sdl2-config --cflags --libs`
 LDFLAGS           = -c
 VPATH             = src src/core src/tests
-LIBS              = -lportaudio -lck -llo -lSDL2_ttf
+LIBS              = -lportaudio -lck -llo -lSDL2_ttf -lconfig
 
 TEST_C_FLAGS      = $(CFLAGS)
 TEST_LIBS         =

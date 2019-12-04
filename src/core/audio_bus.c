@@ -6,7 +6,7 @@
 
 #include "core/audio_bus.h"
 
-const AudioBus *abus_create(AudioBusChannelCount channel_count, uint8_t first_channel) {
+AudioBus *abus_create(AudioBusChannelCount channel_count, uint8_t first_channel) {
   AudioBus *abus = malloc(sizeof(AudioBus));
   check_mem(abus);
   abus->channel_count = channel_count;
@@ -17,7 +17,7 @@ error:
   return NULL;
 }
 
-void abus_destroy(const AudioBus *abus) {
+void abus_destroy(AudioBus *abus) {
   check(abus != NULL, "Invalid Audio Bus");
   free((void *)abus);
   return;
