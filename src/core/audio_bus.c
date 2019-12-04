@@ -6,10 +6,10 @@
 
 #include "core/audio_bus.h"
 
-AudioBus *abus_create(uint8_t channels, uint8_t first_channel) {
+const AudioBus *abus_create(AudioBusChannelCount channel_count, uint8_t first_channel) {
   AudioBus *abus = malloc(sizeof(AudioBus));
   check_mem(abus);
-  abus->channels = channels;
+  abus->channel_count = channel_count;
   abus->first_channel = first_channel;
 
   return abus;
@@ -17,9 +17,9 @@ error:
   return NULL;
 }
 
-void abus_destroy(AudioBus *abus) {
+void abus_destroy(const AudioBus *abus) {
   check(abus != NULL, "Invalid Audio Bus");
-  free(abus);
+  free((void *)abus);
   return;
 error:
   log_err("Could not clean up Audio Bus");

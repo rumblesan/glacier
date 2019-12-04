@@ -15,7 +15,7 @@ typedef struct GlacierAudio {
   uint8_t track_count;
   uint8_t channels;
 
-  AudioBus *input_bus;
+  const AudioBus *input_bus;
 
   SyncControl *syncer;
 
@@ -24,7 +24,7 @@ typedef struct GlacierAudio {
 } GlacierAudio;
 
 GlacierAudio *glacier_create(
-  AudioBus *input_bus,
+  const AudioBus *input_bus,
   uint8_t track_count,
   uint32_t max_buffer_length,
   uint8_t track_buffer_channels

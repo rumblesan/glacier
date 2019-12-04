@@ -140,7 +140,7 @@ int main(void) {
   uint32_t record_buffer_length = 30;
   uint8_t record_buffer_channels = 2;
 
-  AudioBus *input_bus = abus_create(2, 0);
+  const AudioBus *input_bus = abus_create(AudioBus_Stereo, 0);
 
   GlacierAudio *glacier = glacier_create(
     input_bus,

@@ -2,11 +2,16 @@
 
 #include <stdint.h>
 
+typedef enum AudioBusChannelCount {
+  AudioBus_Mono,
+  AudioBus_Stereo,
+} AudioBusChannelCount;
+
 typedef struct AudioBus {
-  uint8_t channels;
+  AudioBusChannelCount channel_count;
   uint8_t first_channel;
 } AudioBus;
 
-AudioBus *abus_create(uint8_t channels, uint8_t first_channel);
+const AudioBus *abus_create(AudioBusChannelCount channel_count, uint8_t first_channel);
 
-void abus_destroy(AudioBus *ab);
+void abus_destroy(const AudioBus *ab);
