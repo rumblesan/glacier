@@ -71,6 +71,7 @@ SyncTimingMessage sc_keep_sync(SyncControl *sc, uint32_t count_increase) {
 
   sm.interval = interval;
   sm.offset = offset;
+  sm.sync_length = sc->sync_length;
   return sm;
 }
 

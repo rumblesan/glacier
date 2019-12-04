@@ -211,19 +211,31 @@ uint32_t lt_playhead_pos(LoopTrack *lc) {
 }
 
 LoopTrackStateChange _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE **input_samples, SAMPLE **output_samples, uint32_t frame_count) {
-  if (lt->state != LoopTrack_State_Concluding) {
-    return LoopTrack_Change_None;
-  }
 
-  if (sync_message.interval == SyncControl_Interval_None) {
-    ab_record(lt->buffer, input_samples, frame_count, 0);
-    return LoopTrack_Change_None;
-  } else {
-    ab_record(lt->buffer, input_samples, sync_message.offset, 0);
-    ab_finish_recording(lt->buffer);
-    ab_playback_mix(lt->buffer, output_samples, frame_count - sync_message.offset, sync_message.offset);
-    lt->state = LoopTrack_State_Playing;
-    return LoopTrack_Change_Finished_Recording;
+  switch (sync_message.interval) {
+    case SyncControl_Interval_None:
+      ab_record(lt->buffer, input_samples, frame_count, 0);
+      return LoopTrack_Change_None;
+    case SyncControl_Interval_Quarter:
+    case SyncControl_Interval_Half:
+      // If this buffer is longer than the sync timing then only
+      // finish on a whole interval
+      if (lt->buffer->record_head_pos > sync_message.sync_length) {
+        ab_record(lt->buffer, input_samples, frame_count, 0);
+        return LoopTrack_Change_None;
+      } else {
+        ab_record(lt->buffer, input_samples, sync_message.offset, 0);
+        ab_finish_recording(lt->buffer);
+        ab_playback_mix(lt->buffer, output_samples, frame_count - sync_message.offset, sync_message.offset);
+        lt->state = LoopTrack_State_Playing;
+        return LoopTrack_Change_Finished_Recording;
+      }
+    case SyncControl_Interval_Whole:
+      ab_record(lt->buffer, input_samples, sync_message.offset, 0);
+      ab_finish_recording(lt->buffer);
+      ab_playback_mix(lt->buffer, output_samples, frame_count - sync_message.offset, sync_message.offset);
+      lt->state = LoopTrack_State_Playing;
+      return LoopTrack_Change_Finished_Recording;
   }
 }
 

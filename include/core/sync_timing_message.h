@@ -15,4 +15,6 @@ typedef struct SyncTimingMessage {
 
   uint32_t offset;
 
+  uint32_t sync_length;
+
 } SyncTimingMessage;
