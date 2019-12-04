@@ -247,15 +247,13 @@ LoopTrackStateChange lt_handle_audio(LoopTrack *lt, SyncTimingMessage sync_messa
       break;
     case LoopTrack_State_Armed:
       if (sync_message.interval == SyncControl_Interval_Whole) {
-        // FIXME
         ab_record(lt->buffer, input_samples, frame_count - sync_message.offset, sync_message.offset);
         lt->state = LoopTrack_State_Recording;
         return LoopTrack_Change_Started_Recording;
       }
       break;
     case LoopTrack_State_Cued:
-      if (sync_message.interval != SyncControl_Interval_None) {
-        // FIXME
+      if (sync_message.interval == SyncControl_Interval_Whole) {
         ab_playback_mix(lt->buffer, output_samples, frame_count - sync_message.offset, sync_message.offset);
         lt->state = LoopTrack_State_Playing;
         return LoopTrack_Change_Started_Playing;
