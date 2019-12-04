@@ -29,8 +29,16 @@ static int audioCB(
   const SAMPLE **in = (const SAMPLE**)inputBuffer;
   AppState *app = (AppState*)userData;
 
-  for (uint8_t c = 0; c < 2; c++) {
-    memcpy(out[c], in[c], framesPerBuffer * sizeof(SAMPLE));
+  if (app->audio_passthrough) {
+    for (uint8_t c = 0; c < 2; c++) {
+      memcpy(out[c], in[c], framesPerBuffer * sizeof(SAMPLE));
+    }
+  } else {
+    for (uint8_t c = 0; c < 2; c++) {
+      for (uint8_t s = 0; s < framesPerBuffer; s++) {
+        out[c][s] = 0;
+      }
+    }
   }
 
   ControlMessage *new_control_message = NULL;
@@ -195,7 +203,7 @@ int main (int argc, char *argv[]) {
 
   ui = ui_create("Glacier", "arial.ttf", 24);
 
-  app = app_state_create(glacier, ui);
+  app = app_state_create(glacier, ui, cfg);
 
   osc_server = osc_start_server(app);
 

@@ -9,6 +9,7 @@
 #include "core/app.h"
 #include "core/glacier.h"
 #include "core/ui.h"
+#include "core/config.h"
 
 bool create_ring_buffer(ck_ring_buffer_t **buffer, ck_ring_t **bus, uint16_t size) {
   *bus = malloc(sizeof(ck_ring_t));
@@ -21,12 +22,13 @@ error:
   return false;
 }
 
-AppState *app_state_create(GlacierAudio *glacier, UIInfo *ui) {
+AppState *app_state_create(GlacierAudio *glacier, UIInfo *ui, GlacierCfg *cfg) {
 
   AppState *as = malloc(sizeof(AppState));
   check_mem(as);
 
   as->running = true;
+  as->audio_passthrough = cfg->audio_passthrough;
 
   check_mem(glacier);
   as->glacier = glacier;

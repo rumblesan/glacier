@@ -6,6 +6,7 @@
 #include "ck_ring.h"
 
 #include "core/glacier.h"
+#include "core/config.h"
 #include "core/ui.h"
 
 typedef struct AppState {
@@ -14,6 +15,8 @@ typedef struct AppState {
   UIInfo *ui;
 
   volatile bool running;
+
+  bool audio_passthrough;
 
   ck_ring_buffer_t *control_bus_buffer;
   ck_ring_t *control_bus;
@@ -29,6 +32,6 @@ typedef struct AppState {
 
 } AppState;
 
-AppState *app_state_create(GlacierAudio *glacier, UIInfo *ui);
+AppState *app_state_create(GlacierAudio *glacier, UIInfo *ui, GlacierCfg *cfg);
 
 void app_state_destroy(AppState *as);
