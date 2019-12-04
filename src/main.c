@@ -11,7 +11,6 @@
 #include "core/app.h"
 #include "core/ui.h"
 #include "core/ui_coms.h"
-#include "core/ui_display.h"
 #include "core/osc_server.h"
 #include "core/glacier.h"
 #include "core/control_message.h"
@@ -96,10 +95,49 @@ void *garbage_collector(void *_app) {
   return NULL;
 }
 
+void ui_display(AppState *app) {
+
+  UIDisplayData *uuid = ui_display_create(app->glacier->track_count);
+  check(
+    ck_ring_enqueue_spsc(app->ui_query_bus, app->ui_query_bus_buffer, uuid),
+    "Couldn't start UI querying"
+  );
+  UIDisplayData *query = NULL;
+
+  SDL_Event e;
+
+  while (app->running){
+    while (SDL_PollEvent(&e)){
+      if (e.type == SDL_QUIT){
+        app->running = false;
+      }
+    }
+
+    if (
+      ck_ring_dequeue_spsc(
+        app->ui_query_bus,
+        app->ui_query_bus_buffer,
+        &query
+      )
+    ) {
+      ui_draw(app->ui, query);
+      ck_ring_enqueue_spsc(
+        app->ui_query_bus,
+        app->ui_query_bus_buffer,
+        query
+      );
+    }
+
+  }
+
+error:
+  return;
+}
+
 /*******************************************************************/
 int main(void) {
   // Glacier variables
-  const AudioBus *input_bus = abus_create(AudioBus_Stereo, 0);
+  const AudioBus *input_bus = abus_create(AudioBus_Mono, 0);
   UIInfo *ui = NULL;
   GlacierAudio *glacier = NULL;
   AppState *app = NULL;
