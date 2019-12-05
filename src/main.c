@@ -260,6 +260,7 @@ error:
   if (glacier != NULL) { glacier_destroy(glacier); }
   if (ui != NULL) { ui_destroy(ui); }
   if (input_bus != NULL) { abus_destroy(input_bus); }
+  if (cfg != NULL) { cfg_destroy(cfg); }
 
   TTF_Quit();
   SDL_Quit();

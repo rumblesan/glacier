@@ -62,6 +62,7 @@ GlacierCfg *cfg_read(char *config_path) {
 void cfg_destroy(GlacierCfg *cfg) {
   check(cfg != NULL, "Invalid config");
   free(cfg);
+  return;
 error:
   log_err("Could not clean up config");
 }
