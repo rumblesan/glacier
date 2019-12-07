@@ -33,11 +33,18 @@ AppState *app_state_create(GlacierAudio *glacier, UIInfo *ui, GlacierCfg *cfg) {
   check_mem(glacier);
   as->glacier = glacier;
 
+  as->midi_in = NULL;
+  as->midi_active = false;
+
   check_mem(ui);
   as->ui = ui;
 
   uint16_t control_bus_size = 1024;
 
+  check(
+    create_ring_buffer(&as->midi_control_bus_buffer, &as->midi_control_bus, control_bus_size),
+    "Could not create midi control bus ring"
+  );
   check(
     create_ring_buffer(&as->control_bus_buffer, &as->control_bus, control_bus_size),
     "Could not create control bus ring"

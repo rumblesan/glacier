@@ -6,6 +6,7 @@ An audio looper
 ## Dependencies
 
 * portaudio
+* portmidi
 * concurrency kit
   - libck
 * lightweight OSC

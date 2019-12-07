@@ -4,6 +4,8 @@
 #include <unistd.h>
 
 #include "portaudio.h"
+#include "portmidi.h"
+#include "porttime.h"
 
 #include "dbg.h"
 
@@ -16,6 +18,30 @@
 #include "core/glacier.h"
 #include "core/control_message.h"
 #include "core/audio_bus.h"
+
+void process_midi(PtTimestamp timestamp, void *userData) {
+  AppState *app = (AppState*)userData;
+
+  if (!app->midi_active) return;
+  PmError result;
+  PmEvent buffer;
+  int status, data1, data2 = 0;
+
+  do {
+    result = Pm_Poll(app->midi_in);
+    if (result == TRUE) {
+      if (Pm_Read(app->midi_in, &buffer, 1) == pmBufferOverflow) 
+        continue;
+      /* unless there was overflow, we should have a message now */
+      status = Pm_MessageStatus(buffer.message);
+      data1 = Pm_MessageData1(buffer.message);
+      data2 = Pm_MessageData2(buffer.message);
+      printf("received MIDI data %d %d %d\n", status, data1, data2);
+      // FIXME MIDI processing here
+    }
+  } while (result == TRUE);
+
+}
 
 static int audioCB(
   const void *inputBuffer,
@@ -166,7 +192,12 @@ int main (int argc, char *argv[]) {
   // Port Audio variables
   PaStreamParameters inputParameters, outputParameters;
   PaError portAudioErr = paNoError;
-  PaStream *stream;
+  PaStream *audio_stream;
+
+  // Port MIDI variables
+  int midiDeviceId;
+  const PmDeviceInfo *midiDeviceInfo = NULL;
+  PmError portMIDIErr = pmNoError;
 
   char *config_path = argv[1];
 
@@ -219,7 +250,7 @@ int main (int argc, char *argv[]) {
         "Error creating garbage collector thread");
 
   portAudioErr = Pa_OpenStream(
-    &stream,
+    &audio_stream,
     &inputParameters,
     &outputParameters,
     sample_rate,
@@ -230,14 +261,36 @@ int main (int argc, char *argv[]) {
   );
   check(portAudioErr == paNoError, "Could not open stream");
 
-  portAudioErr = Pa_StartStream( stream );
+  portAudioErr = Pa_StartStream( audio_stream );
   check(portAudioErr == paNoError, "Could not start stream");
+
+  // Start handling MIDI input
+  Pt_Start(1, &process_midi, app); /* start a timer with millisecond accuracy */
+
+	Pm_Initialize();
+
+  midiDeviceId = Pm_GetDefaultInputDeviceID();
+  midiDeviceInfo = Pm_GetDeviceInfo(midiDeviceId);
+  check(midiDeviceInfo != NULL, "Could not open default input device (%d).", midiDeviceId);
+  printf("Opening input device %s %s - %d\n", midiDeviceInfo->interf, midiDeviceInfo->name, midiDeviceId);
+
+  portMIDIErr = Pm_OpenInput(
+    &app->midi_in,
+    midiDeviceId,
+    NULL,
+    0,
+    NULL,
+    NULL
+  );
+  check(portMIDIErr == pmNoError, "Could not open midi input");
+  check(app->midi_in != NULL, "Could not open midi input");
+  app->midi_active = true;
 
   // UI blocks main thread
   ui_display(app);
 
   // tidy up
-  portAudioErr = Pa_CloseStream( stream );
+  portAudioErr = Pa_CloseStream( audio_stream );
   check(portAudioErr == paNoError, "Could not close stream");
 
   osc_stop_server(osc_server);
@@ -262,15 +315,21 @@ error:
   if (input_bus != NULL) { abus_destroy(input_bus); }
   if (cfg != NULL) { cfg_destroy(cfg); }
 
-  TTF_Quit();
-  SDL_Quit();
-
   // port audio error handling
   if (portAudioErr != paNoError) {
     fprintf( stderr, "An error occured while using the portaudio stream\n");
     fprintf( stderr, "Error number: %d\n", portAudioErr);
     fprintf( stderr, "Error message: %s\n", Pa_GetErrorText(portAudioErr));
   }
+  if (portMIDIErr != pmNoError) {
+    fprintf( stderr, "An error occured while using the portmidi stream\n");
+    fprintf( stderr, "Error number: %d\n", portMIDIErr);
+    fprintf( stderr, "Error message: %s\n", Pm_GetErrorText(portMIDIErr));
+  }
   Pa_Terminate();
+
+  TTF_Quit();
+  SDL_Quit();
+
   return -1;
 }

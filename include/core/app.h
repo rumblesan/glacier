@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "ck_ring.h"
+#include "portmidi.h"
 
 #include "core/glacier.h"
 #include "core/config.h"
@@ -17,6 +18,12 @@ typedef struct AppState {
   volatile bool running;
 
   bool audio_passthrough;
+
+  PortMidiStream *midi_in;
+  bool midi_active;
+
+  ck_ring_buffer_t *midi_control_bus_buffer;
+  ck_ring_t *midi_control_bus;
 
   ck_ring_buffer_t *control_bus_buffer;
   ck_ring_t *control_bus;
