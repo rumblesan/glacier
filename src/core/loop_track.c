@@ -8,6 +8,14 @@
 #include "core/loop_track.h"
 #include "core/audio_buffer.h"
 
+const char *LoopTrackActionStrings[] = {
+    "Playback", "Record", "ToggleOverdub",
+};
+
+const char *lt_action_string(LoopTrackAction action) {
+  return LoopTrackActionStrings[action];
+}
+
 const char *LoopTrackStateStrings[] = {
     "Error", "Stopped", "Armed", "Cued", "Recording", "Concluding", "Playing", "Overdubbing",
 };

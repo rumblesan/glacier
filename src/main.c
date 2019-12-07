@@ -17,7 +17,18 @@
 #include "core/osc_server.h"
 #include "core/glacier.h"
 #include "core/control_message.h"
+#include "core/loop_track.h"
 #include "core/audio_bus.h"
+
+void send_midi_action(AppState *app, uint8_t track_id, LoopTrackAction action) {
+  ControlMessage *cm = cm_create(track_id, action);
+  printf("sending %s control message to track %d\n", lt_action_string(action), track_id);
+  if (
+    ck_ring_enqueue_spsc(app->control_bus,app->control_bus_buffer, cm) == false
+  ) {
+    printf("Could not send message to audio thread\n");
+  }
+}
 
 void process_midi(PtTimestamp timestamp, void *userData) {
   AppState *app = (AppState*)userData;
@@ -36,8 +47,31 @@ void process_midi(PtTimestamp timestamp, void *userData) {
       status = Pm_MessageStatus(buffer.message);
       data1 = Pm_MessageData1(buffer.message);
       data2 = Pm_MessageData2(buffer.message);
-      printf("received MIDI data %d %d %d\n", status, data1, data2);
-      // FIXME MIDI processing here
+      debug("received MIDI data %d %d %d\n", status, data1, data2);
+      if (status >= 0x90 && status <= 0x9F && data2 > 0) {
+        switch (data1) {
+          case 1:
+            send_midi_action(app, 0, LoopTrack_Action_Record);
+            break;
+          case 6:
+            send_midi_action(app, 0, LoopTrack_Action_Playback);
+            break;
+          case 2:
+            send_midi_action(app, 1, LoopTrack_Action_Record);
+            break;
+          case 7:
+            send_midi_action(app, 1, LoopTrack_Action_Playback);
+            break;
+          case 3:
+            send_midi_action(app, 2, LoopTrack_Action_Record);
+            break;
+          case 8:
+            send_midi_action(app, 2, LoopTrack_Action_Playback);
+            break;
+          default:
+            break;
+        }
+      }
     }
   } while (result == TRUE);
 

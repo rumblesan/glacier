@@ -46,6 +46,8 @@ typedef struct LoopTrack {
 
 } LoopTrack;
 
+const char *lt_action_string(LoopTrackAction action);
+
 const char *lt_state_string(LoopTrackState state);
 
 LoopTrack *lt_create(uint8_t buffer_id, uint32_t max_length, uint8_t channels);
