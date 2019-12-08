@@ -15,7 +15,7 @@
 void send_action(AppState *app, uint8_t track_id, LoopTrackAction action) {
   ControlMessage *cm = cm_create(track_id, action);
   if (
-    ck_ring_enqueue_spsc(app->control_bus,app->control_bus_buffer, cm) == false
+    ck_ring_enqueue_spsc(app->osc_control_bus,app->osc_control_bus_buffer, cm) == false
   ) {
     printf("Could not send message to audio thread\n");
   }

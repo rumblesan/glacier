@@ -22,8 +22,8 @@ typedef struct AppState {
   ck_ring_buffer_t *midi_control_bus_buffer;
   ck_ring_t *midi_control_bus;
 
-  ck_ring_buffer_t *control_bus_buffer;
-  ck_ring_t *control_bus;
+  ck_ring_buffer_t *osc_control_bus_buffer;
+  ck_ring_t *osc_control_bus;
 
   ck_ring_buffer_t *control_bus_garbage_buffer;
   ck_ring_t *control_bus_garbage;

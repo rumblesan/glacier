@@ -47,8 +47,8 @@ static int audioCB(
 
   while (
     ck_ring_dequeue_spsc(
-      app->control_bus,
-      app->control_bus_buffer,
+      app->osc_control_bus,
+      app->osc_control_bus_buffer,
       &new_control_message
     ) == true
   ) {

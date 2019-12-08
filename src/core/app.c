@@ -43,7 +43,7 @@ AppState *app_state_create(GlacierAudio *glacier, UIInfo *ui, GlacierCfg *cfg) {
     "Could not create midi control bus ring"
   );
   check(
-    create_ring_buffer(&as->control_bus_buffer, &as->control_bus, control_bus_size),
+    create_ring_buffer(&as->osc_control_bus_buffer, &as->osc_control_bus, control_bus_size),
     "Could not create control bus ring"
   );
   check(
