@@ -30,7 +30,6 @@ typedef enum loop_track_state_change {
   LoopTrack_Change_Started_Recording,
   LoopTrack_Change_Finished_Recording,
   LoopTrack_Change_Stopped,
-  LoopTrack_Change_Started,
   LoopTrack_Change_Cleared,
 } LoopTrackStateChange;
 

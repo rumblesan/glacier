@@ -82,25 +82,27 @@ void _sc_calculate_sync_lengths(SyncControl *sc, uint32_t recorded_length) {
   sc->three_quarter_length = sc->half_length + sc->quarter_length;
 }
 
-SyncControlState sc_handle_track_change(SyncControl *sc, LoopTrackStateChange track_change, LoopTrack *track) {
-  if (track_change == LoopTrack_Change_None) { return sc->state; }
+SyncControlState sc_track_finished_recording(SyncControl *sc, LoopTrack *track) {
   switch (sc->state) {
     case SyncControl_State_Empty:
-      if (track_change == LoopTrack_Change_Finished_Recording) {
         sc->state = SyncControl_State_Running;
         _sc_calculate_sync_lengths(sc, lt_length(track));
-      }
       break;
-    default: return sc->state;
+    case SyncControl_State_Running:
+      break;
+    case SyncControl_State_Stopped:
+      sc->state = SyncControl_State_Running;
+      _sc_calculate_sync_lengths(sc, lt_length(track));
+      break;
   }
   return sc->state;
 }
 
-SyncControlState sc_buffer_stopped(SyncControl *sc) {
+SyncControlState sc_track_stopped(SyncControl *sc) {
   uint8_t running_loop_tracks = 0;
   switch (sc->state) {
     case SyncControl_State_Empty:
-      // TODO shouldn't occur, but maybe check?
+      log_err("Track shouldn't stop whilst sync control is empty");
       break;
     case SyncControl_State_Running:
       for (uint8_t i = 0; i < sc->track_count; i++) {
@@ -109,23 +111,21 @@ SyncControlState sc_buffer_stopped(SyncControl *sc) {
         }
       }
       if (running_loop_tracks == 0) {
-        debug("Sync Controller Running -> Stopped");
         sc->state = SyncControl_State_Stopped;
       }
-      // do nothing
       break;
     case SyncControl_State_Stopped:
-      // TODO shouldn't occur, but maybe check?
+      log_err("Track shouldn't stop whilst sync control is stopped");
       break;
   }
   return sc->state;
 }
 
-SyncControlState sc_buffer_cleared(SyncControl *sc) {
+SyncControlState sc_track_cleared(SyncControl *sc) {
   uint8_t empty_loop_tracks = 0;
   switch (sc->state) {
     case SyncControl_State_Empty:
-      // TODO shouldn't occur, but maybe check?
+      // do nothing
       break;
     case SyncControl_State_Running:
       for (uint8_t i = 0; i < sc->track_count; i++) {
@@ -136,7 +136,6 @@ SyncControlState sc_buffer_cleared(SyncControl *sc) {
       if (empty_loop_tracks == sc->track_count) {
         sc->state = SyncControl_State_Empty;
       }
-      // do nothing
       break;
     case SyncControl_State_Stopped:
       for (uint8_t i = 0; i < sc->track_count; i++) {
@@ -147,8 +146,41 @@ SyncControlState sc_buffer_cleared(SyncControl *sc) {
       if (empty_loop_tracks == sc->track_count) {
         sc->state = SyncControl_State_Empty;
       }
+      break;
+  }
+  return sc->state;
+}
+
+SyncControlState sc_track_started(SyncControl *sc, LoopTrack *track) {
+  switch (sc->state) {
+    case SyncControl_State_Empty:
+      sc->state = SyncControl_State_Running;
+      sc->sync_count = lt_playhead_pos(track);
+      break;
+    case SyncControl_State_Running:
       // do nothing
       break;
+    case SyncControl_State_Stopped:
+      sc->state = SyncControl_State_Running;
+      _sc_calculate_sync_lengths(sc, lt_length(track));
+      break;
+  }
+  return sc->state;
+}
+
+SyncControlState sc_handle_track_change(SyncControl *sc, LoopTrackStateChange track_change, LoopTrack *track) {
+  switch (track_change) {
+    case LoopTrack_Change_None:
+      return sc->state;
+    case LoopTrack_Change_Finished_Recording:
+      return sc_track_finished_recording(sc, track);
+    case LoopTrack_Change_Stopped:
+      return sc_track_stopped(sc);
+    case LoopTrack_Change_Cleared:
+      return sc_track_cleared(sc);
+    case LoopTrack_Change_Started_Playing:
+      return sc_track_started(sc, track);
+    default: return sc->state;
   }
   return sc->state;
 }

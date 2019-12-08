@@ -78,7 +78,47 @@ void test_syncing() {
   _cleanup(sc, track_count, loop_tracks);
 }
 
+void test_sync_tracks_stopping() {
+  uint8_t track_count = 3;
+  LoopTrack **loop_tracks = malloc(sizeof(LoopTrack*) * track_count);
+  for (uint8_t i = 0; i < track_count; i++) {
+    loop_tracks[i] = lt_create(i, 1024, 2);
+  }
+
+  SyncControl *sc = sc_create(loop_tracks, track_count);
+  mu_assert(sc != NULL, "Could not create Sync Control");
+
+  uint32_t recorded_length = 100;
+  loop_tracks[0]->buffer->length = recorded_length;
+  loop_tracks[0]->state = LoopTrack_State_Playing;
+  SyncControlState after_start = sc_handle_track_change(sc, LoopTrack_Change_Finished_Recording, loop_tracks[0]);
+
+  mu_assert(after_start == SyncControl_State_Running, "Sync Control should be running");
+  mu_assert(sc->sync_length == recorded_length, "Sync Control should have recorded %d samples not %d", recorded_length, sc->sync_length);
+
+  sc_keep_sync(sc, 100);
+
+  loop_tracks[1]->buffer->length = recorded_length;
+  loop_tracks[1]->state = LoopTrack_State_Stopped;
+  after_start = sc_handle_track_change(sc, LoopTrack_Change_Stopped, loop_tracks[1]);
+
+  mu_assert(after_start == SyncControl_State_Running, "Sync Control should still be running");
+
+  loop_tracks[0]->state = LoopTrack_State_Stopped;
+  after_start = sc_handle_track_change(sc, LoopTrack_Change_Stopped, loop_tracks[0]);
+
+  mu_assert(after_start == SyncControl_State_Stopped, "Sync Control should be stopped");
+
+  loop_tracks[0]->state = LoopTrack_State_Playing;
+  after_start = sc_handle_track_change(sc, LoopTrack_Change_Started_Playing, loop_tracks[0]);
+
+  mu_assert(after_start == SyncControl_State_Running, "Sync Control should be running again");
+
+  _cleanup(sc, track_count, loop_tracks);
+}
+
 void test_sync_control() {
   mu_run_test(test_sync_control_create);
   mu_run_test(test_syncing);
+  mu_run_test(test_sync_tracks_stopping);
 }
