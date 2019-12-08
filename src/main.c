@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <inttypes.h>
-#include <pthread.h>
 #include <unistd.h>
 
 #include "portaudio.h"
@@ -12,6 +11,7 @@
 #include "core/types.h"
 #include "core/config.h"
 #include "core/app.h"
+#include "core/garbage_collector.h"
 #include "core/ui.h"
 #include "core/ui_coms.h"
 #include "core/osc_server.h"
@@ -138,32 +138,6 @@ static int audioCB(
   return paContinue;
 }
 
-
-void *garbage_collector(void *_app) {
-  AppState *app = _app;
-
-  struct timespec tim, tim2;
-  tim.tv_sec = 5;
-  tim.tv_nsec = 0;
-
-  ControlMessage *new_control_message = NULL;
-
-  while(app->running) {
-    while (
-      ck_ring_dequeue_spsc(
-        app->control_bus,
-        app->control_bus_buffer,
-        &new_control_message
-      ) == true
-    ) {
-      cm_destroy(new_control_message);
-    }
-    sched_yield();
-    nanosleep(&tim, &tim2);
-  }
-  return NULL;
-}
-
 void ui_display(AppState *app) {
 
   UIDisplayData *uuid = ui_display_create(app->glacier->track_count);
@@ -209,14 +183,12 @@ int main (int argc, char *argv[]) {
 
   GlacierCfg *cfg = NULL;
 
+  GarbageCollector *gc = NULL;
   AudioBus *input_bus = NULL;
   UIInfo *ui = NULL;
   GlacierAudio *glacier = NULL;
   AppState *app = NULL;
   OSCServer osc_server = NULL;
-
-  pthread_t garbage_thread;
-  pthread_attr_t garbage_thread_attr;
 
   uint32_t sample_rate = 48000;
   uint8_t loop_track_count = 3;
@@ -272,16 +244,8 @@ int main (int argc, char *argv[]) {
 
   osc_server = osc_start_server(app);
 
-  debug("Starting garbage collector\n");
-  check(!pthread_attr_init(&garbage_thread_attr),
-        "Error setting garbage collector thread attributes");
-  check(!pthread_attr_setdetachstate(&garbage_thread_attr, PTHREAD_CREATE_DETACHED),
-        "Error setting garbage collector thread detach state");
-  check(!pthread_create(&garbage_thread,
-                        &garbage_thread_attr,
-                        &garbage_collector,
-                        app),
-        "Error creating garbage collector thread");
+  gc = gc_create(app->control_bus_garbage, app->control_bus_garbage_buffer);
+  check(gc_start(gc), "Couldn't start garbage collector");
 
   portAudioErr = Pa_OpenStream(
     &audio_stream,
@@ -327,6 +291,7 @@ int main (int argc, char *argv[]) {
   portAudioErr = Pa_CloseStream( audio_stream );
   check(portAudioErr == paNoError, "Could not close stream");
 
+  gc_destroy(gc);
   osc_stop_server(osc_server);
   app_state_destroy(app);
   glacier_destroy(glacier);
@@ -342,6 +307,7 @@ int main (int argc, char *argv[]) {
   return 0;
 
 error:
+  if (gc != NULL) { gc_destroy(gc); }
   if (osc_server != NULL) { osc_stop_server(osc_server); }
   if (app != NULL) { app_state_destroy(app); }
   if (glacier != NULL) { glacier_destroy(glacier); }
