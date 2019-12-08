@@ -234,6 +234,7 @@ LoopTrackStateChange _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync
       } else {
         ab_record(lt->buffer, input_samples, sync_message.offset, 0);
         ab_finish_recording(lt->buffer);
+        ab_tidy(lt->buffer, 5, 1000);
         ab_playback_mix(lt->buffer, output_samples, frame_count - sync_message.offset, sync_message.offset);
         lt->state = LoopTrack_State_Playing;
         return LoopTrack_Change_Finished_Recording;
@@ -241,6 +242,7 @@ LoopTrackStateChange _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync
     case SyncControl_Interval_Whole:
       ab_record(lt->buffer, input_samples, sync_message.offset, 0);
       ab_finish_recording(lt->buffer);
+      ab_tidy(lt->buffer, 5, 1000);
       ab_playback_mix(lt->buffer, output_samples, frame_count - sync_message.offset, sync_message.offset);
       lt->state = LoopTrack_State_Playing;
       return LoopTrack_Change_Finished_Recording;

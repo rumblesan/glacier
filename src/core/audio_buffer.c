@@ -110,6 +110,67 @@ void ab_playback_mix(AudioBuffer *ab, SAMPLE **output_samples, uint32_t frame_co
   }
 }
 
+static inline bool zero_crossing(float a, float b) {
+    return a*b <= 0.0f;
+}
+
+void ab_tidy_zero_crossing(AudioBuffer *ab, uint8_t crossings) {
+  for (uint8_t c = 0; c < ab->channels; c++) {
+    uint8_t crossing_count = 0;
+    uint32_t mark = 0;
+    // Handle beginning
+    for (uint32_t s = 1; s < ab->length; s++) {
+      if (zero_crossing(ab->samples[c][s - 1], ab->samples[c][s])) {
+        crossing_count += 1;
+        if (crossing_count >= crossings) {
+          mark = s;
+          break;
+        }
+      }
+    }
+    for (uint32_t s = 0; s < mark; s++) {
+      ab->samples[c][s] = 0.0;
+    }
+
+    crossing_count = 0;
+    // Handle end
+    for (uint32_t s = ab->length; s > 1; s--) {
+      if (zero_crossing(ab->samples[c][s - 1], ab->samples[c][s])) {
+        crossing_count += 1;
+        if (crossing_count >= crossings) {
+          mark = s;
+          break;
+        }
+      }
+    }
+    for (uint32_t s = mark; s < ab->length; s++) {
+      ab->samples[c][s] = 0.0;
+    }
+  }
+}
+
+void ab_tidy_fade(AudioBuffer *ab, uint32_t fade_length) {
+  float delta = 1 / fade_length;
+  float mod;
+  for (uint8_t c = 0; c < ab->channels; c++) {
+    mod = 0;
+    for (uint32_t s = 0; s < fade_length; s++) {
+      ab->samples[c][s] *= mod;
+      mod += delta;
+    }
+    mod = 1;
+    for (uint32_t s = ab->length - fade_length; s < ab->length; s++) {
+      ab->samples[c][s] *= mod;
+      mod -= delta;
+    }
+  }
+}
+
+void ab_tidy(AudioBuffer *ab, uint8_t crossing_count, uint32_t fade_length) {
+  ab_tidy_zero_crossing(ab, crossing_count);
+  ab_tidy_fade(ab, fade_length);
+}
+
 void ab_destroy(AudioBuffer *ab) {
   check(ab != NULL, "Invalid Audio Buffer");
   check(ab->samples != NULL, "Invalid samples in Audio Buffer");

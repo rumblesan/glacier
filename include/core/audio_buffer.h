@@ -31,4 +31,6 @@ bool ab_overdub(AudioBuffer *ab, const SAMPLE **input_samples, uint32_t frame_co
 
 void ab_playback_mix(AudioBuffer *ab, SAMPLE **output_samples, uint32_t frame_count, uint32_t offset);
 
+void ab_tidy(AudioBuffer *ab, uint8_t crossing_count, uint32_t fade_length);
+
 void ab_destroy(AudioBuffer *ab);
