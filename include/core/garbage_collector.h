@@ -17,7 +17,7 @@ typedef struct GarbageCollector {
 
 } GarbageCollector;
 
-GarbageCollector *gc_create();
+GarbageCollector *gc_create(ck_ring_t *gc_queue, ck_ring_buffer_t *gc_queue_buffer);
 
 bool gc_start(GarbageCollector *gc);
 
