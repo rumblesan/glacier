@@ -57,6 +57,10 @@ void draw_track_info(UIInfo *ui, uint8_t track_number, TrackUIDisplay *info) {
   SDL_Rect text_rect = { 0, track_number * ui->font_size, 0, 0 };
   SDL_QueryTexture(texture, NULL, NULL, &(text_rect.w), &(text_rect.h));
   SDL_RenderCopy(ui->renderer, texture, NULL, &text_rect);
+
+  // cleanup
+  SDL_FreeSurface(surface);
+  SDL_DestroyTexture(texture);
 }
 
 void draw_sync_info(UIInfo *ui, UIDisplayData *uuid) {
@@ -70,6 +74,10 @@ void draw_sync_info(UIInfo *ui, UIDisplayData *uuid) {
   SDL_Rect text_rect = { 0, (uuid->track_count + 1) * ui->font_size, 0, 0 };
   SDL_QueryTexture(texture, NULL, NULL, &(text_rect.w), &(text_rect.h));
   SDL_RenderCopy(ui->renderer, texture, NULL, &text_rect);
+
+  // cleanup
+  SDL_FreeSurface(surface);
+  SDL_DestroyTexture(texture);
 }
 
 void ui_draw(UIInfo *ui, UIDisplayData *uuid) {
