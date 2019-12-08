@@ -130,8 +130,8 @@ static int audioCB(
   ) {
     glacier_report(app->glacier, query);
     ck_ring_enqueue_spsc(
-      app->ui_query_bus,
-      app->ui_query_bus_buffer,
+      app->ui_response_bus,
+      app->ui_response_bus_buffer,
       query
     );
   }
@@ -159,8 +159,8 @@ void ui_display(AppState *app) {
 
     if (
       ck_ring_dequeue_spsc(
-        app->ui_query_bus,
-        app->ui_query_bus_buffer,
+        app->ui_response_bus,
+        app->ui_response_bus_buffer,
         &query
       )
     ) {
