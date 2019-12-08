@@ -8,9 +8,9 @@
 #include "core/audio_io.h"
 
 void log_pa_error(PaError portAudioErr) {
-  log_err("An error occured while using the portaudio stream\n");
-  log_err("Error number: %d\n", portAudioErr);
-  log_err("Error message: %s\n", Pa_GetErrorText(portAudioErr));
+  log_err("An error occured while using the portaudio stream");
+  log_err("Error number: %d", portAudioErr);
+  log_err("Error message: %s", Pa_GetErrorText(portAudioErr));
 }
 
 AudioIO *audio_io_create(uint32_t sample_rate) {

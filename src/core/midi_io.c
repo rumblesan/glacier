@@ -10,9 +10,9 @@
 #include "core/control_message.h"
 
 void log_pm_error(PmError portMidiErr) {
-  log_err("An error occured while using the portmidi stream\n");
-  log_err("Error number: %d\n", portMidiErr);
-  log_err("Error message: %s\n", Pm_GetErrorText(portMidiErr));
+  log_err("An error occured while using the portmidi stream");
+  log_err("Error number: %d", portMidiErr);
+  log_err("Error message: %s", Pm_GetErrorText(portMidiErr));
 }
 
 MidiIO *midi_io_create(ck_ring_t *com_queue, ck_ring_buffer_t *com_queue_buffer) {
@@ -34,11 +34,11 @@ error:
 
 void send_midi_action(MidiIO *mio, uint8_t track_id, LoopTrackAction action) {
   ControlMessage *cm = cm_create(track_id, action);
-  debug("sending %s control message to track %d\n", lt_action_string(action), track_id);
+  debug("sending %s control message to track %d", lt_action_string(action), track_id);
   if (
     ck_ring_enqueue_spsc(mio->com_queue, mio->com_queue_buffer, cm) == false
   ) {
-    fprintf(stderr, "Could not send message to audio thread\n");
+    log_err("Could not send message to audio thread");
   }
 }
 
@@ -59,7 +59,7 @@ void process_midi(PtTimestamp timestamp, void *userData) {
       status = Pm_MessageStatus(buffer.message);
       data1 = Pm_MessageData1(buffer.message);
       data2 = Pm_MessageData2(buffer.message);
-      debug("received MIDI data %d %d %d\n", status, data1, data2);
+      debug("Received MIDI data %02x %02x %02x", status, data1, data2);
       if (status >= 0x90 && status <= 0x9F && data2 > 0) {
         switch (data1) {
           case 1:
@@ -100,8 +100,8 @@ bool midi_io_run(MidiIO *mio) {
   mio->input_device_id = Pm_GetDefaultInputDeviceID();
   mio->input_device_info = Pm_GetDeviceInfo(mio->input_device_id);
   check(mio->input_device_id != pmNoDevice, "Could not open default input device (%d).", mio->input_device_id);
-  printf(
-    "Opening input device %s %s - %d\n",
+  log_info(
+    "Opening MIDI input device %s %s - %d",
     mio->input_device_info->interf,
     mio->input_device_info->name,
     mio->input_device_id

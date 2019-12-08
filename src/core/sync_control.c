@@ -109,6 +109,7 @@ SyncControlState sc_buffer_stopped(SyncControl *sc) {
         }
       }
       if (running_loop_tracks == 0) {
+        debug("Sync Controller Running -> Stopped");
         sc->state = SyncControl_State_Stopped;
       }
       // do nothing
