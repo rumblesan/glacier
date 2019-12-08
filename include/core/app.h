@@ -19,9 +19,6 @@ typedef struct AppState {
 
   bool audio_passthrough;
 
-  PortMidiStream *midi_in;
-  bool midi_active;
-
   ck_ring_buffer_t *midi_control_bus_buffer;
   ck_ring_t *midi_control_bus;
 

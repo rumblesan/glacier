@@ -3,8 +3,6 @@
 #include <unistd.h>
 
 #include "portaudio.h"
-#include "portmidi.h"
-#include "porttime.h"
 
 #include "dbg.h"
 
@@ -13,70 +11,12 @@
 #include "core/app.h"
 #include "core/garbage_collector.h"
 #include "core/audio_io.h"
+#include "core/midi_io.h"
 #include "core/ui.h"
 #include "core/ui_coms.h"
 #include "core/osc_server.h"
 #include "core/glacier.h"
-#include "core/control_message.h"
-#include "core/loop_track.h"
 #include "core/audio_bus.h"
-
-void send_midi_action(AppState *app, uint8_t track_id, LoopTrackAction action) {
-  ControlMessage *cm = cm_create(track_id, action);
-  printf("sending %s control message to track %d\n", lt_action_string(action), track_id);
-  if (
-    ck_ring_enqueue_spsc(app->control_bus,app->control_bus_buffer, cm) == false
-  ) {
-    printf("Could not send message to audio thread\n");
-  }
-}
-
-void process_midi(PtTimestamp timestamp, void *userData) {
-  AppState *app = (AppState*)userData;
-
-  if (!app->midi_active) return;
-  PmError result;
-  PmEvent buffer;
-  int status, data1, data2 = 0;
-
-  do {
-    result = Pm_Poll(app->midi_in);
-    if (result == TRUE) {
-      if (Pm_Read(app->midi_in, &buffer, 1) == pmBufferOverflow) 
-        continue;
-      /* unless there was overflow, we should have a message now */
-      status = Pm_MessageStatus(buffer.message);
-      data1 = Pm_MessageData1(buffer.message);
-      data2 = Pm_MessageData2(buffer.message);
-      debug("received MIDI data %d %d %d\n", status, data1, data2);
-      if (status >= 0x90 && status <= 0x9F && data2 > 0) {
-        switch (data1) {
-          case 1:
-            send_midi_action(app, 0, LoopTrack_Action_Record);
-            break;
-          case 6:
-            send_midi_action(app, 0, LoopTrack_Action_Playback);
-            break;
-          case 2:
-            send_midi_action(app, 1, LoopTrack_Action_Record);
-            break;
-          case 7:
-            send_midi_action(app, 1, LoopTrack_Action_Playback);
-            break;
-          case 3:
-            send_midi_action(app, 2, LoopTrack_Action_Record);
-            break;
-          case 8:
-            send_midi_action(app, 2, LoopTrack_Action_Playback);
-            break;
-          default:
-            break;
-        }
-      }
-    }
-  } while (result == TRUE);
-
-}
 
 static int audioCB(
   const void *inputBuffer,
@@ -109,6 +49,20 @@ static int audioCB(
     ck_ring_dequeue_spsc(
       app->control_bus,
       app->control_bus_buffer,
+      &new_control_message
+    ) == true
+  ) {
+    glacier_handle_command(app->glacier, new_control_message);
+    ck_ring_enqueue_spsc(
+      app->control_bus_garbage,
+      app->control_bus_garbage_buffer,
+      new_control_message
+    );
+  }
+  while (
+    ck_ring_dequeue_spsc(
+      app->midi_control_bus,
+      app->midi_control_bus_buffer,
       &new_control_message
     ) == true
   ) {
@@ -187,6 +141,7 @@ int main (int argc, char *argv[]) {
   GarbageCollector *gc = NULL;
   AudioBus *input_bus = NULL;
   AudioIO *audio_io = NULL;
+  MidiIO *midi_io = NULL;
   UIInfo *ui = NULL;
   GlacierAudio *glacier = NULL;
   AppState *app = NULL;
@@ -196,11 +151,6 @@ int main (int argc, char *argv[]) {
   uint8_t loop_track_count = 3;
   uint32_t record_buffer_length = 30;
   uint8_t record_buffer_channels = 2;
-
-  // Port MIDI variables
-  int midiDeviceId;
-  const PmDeviceInfo *midiDeviceInfo = NULL;
-  PmError portMIDIErr = pmNoError;
 
   char *config_path = argv[1];
 
@@ -222,6 +172,10 @@ int main (int argc, char *argv[]) {
 
   app = app_state_create(glacier, ui, cfg);
 
+  midi_io = midi_io_create(
+    app->midi_control_bus, app->midi_control_bus_buffer
+  );
+
   osc_server = osc_start_server(app);
 
   gc = gc_create(app->control_bus_garbage, app->control_bus_garbage_buffer);
@@ -232,32 +186,13 @@ int main (int argc, char *argv[]) {
     "Could not start Audio IO"
   );
 
-  // Start handling MIDI input
-  Pt_Start(1, &process_midi, app); /* start a timer with millisecond accuracy */
-
-	Pm_Initialize();
-
-  midiDeviceId = Pm_GetDefaultInputDeviceID();
-  midiDeviceInfo = Pm_GetDeviceInfo(midiDeviceId);
-  check(midiDeviceInfo != NULL, "Could not open default input device (%d).", midiDeviceId);
-  printf("Opening input device %s %s - %d\n", midiDeviceInfo->interf, midiDeviceInfo->name, midiDeviceId);
-
-  portMIDIErr = Pm_OpenInput(
-    &app->midi_in,
-    midiDeviceId,
-    NULL,
-    0,
-    NULL,
-    NULL
-  );
-  check(portMIDIErr == pmNoError, "Could not open midi input");
-  check(app->midi_in != NULL, "Could not open midi input");
-  app->midi_active = true;
+  check(midi_io_run(midi_io), "Could not start Midi IO");
 
   // UI blocks main thread
   ui_display(app);
 
   audio_io_destroy(audio_io);
+  midi_io_destroy(midi_io);
 
   gc_destroy(gc);
   osc_stop_server(osc_server);
@@ -275,6 +210,7 @@ int main (int argc, char *argv[]) {
 
 error:
   if (audio_io != NULL) { audio_io_destroy(audio_io); }
+  if (midi_io != NULL) { midi_io_destroy(midi_io); }
   if (gc != NULL) { gc_destroy(gc); }
   if (osc_server != NULL) { osc_stop_server(osc_server); }
   if (app != NULL) { app_state_destroy(app); }
@@ -282,12 +218,6 @@ error:
   if (ui != NULL) { ui_destroy(ui); }
   if (input_bus != NULL) { abus_destroy(input_bus); }
   if (cfg != NULL) { cfg_destroy(cfg); }
-
-  if (portMIDIErr != pmNoError) {
-    fprintf( stderr, "An error occured while using the portmidi stream\n");
-    fprintf( stderr, "Error number: %d\n", portMIDIErr);
-    fprintf( stderr, "Error message: %s\n", Pm_GetErrorText(portMIDIErr));
-  }
 
   TTF_Quit();
   SDL_Quit();

@@ -33,9 +33,6 @@ AppState *app_state_create(GlacierAudio *glacier, UIInfo *ui, GlacierCfg *cfg) {
   check_mem(glacier);
   as->glacier = glacier;
 
-  as->midi_in = NULL;
-  as->midi_active = false;
-
   check_mem(ui);
   as->ui = ui;
 
