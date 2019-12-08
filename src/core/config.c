@@ -8,11 +8,14 @@
 
 GlacierCfg *cfg_read(char *config_path) {
   log_info("Loading config from %s", config_path);
-  config_t config;
-  config_t *cfg = &config;
+
+  config_t *cfg = NULL;
 
   GlacierCfg *glacier_cfg = malloc(sizeof(GlacierCfg));
   check_mem(glacier_cfg);
+
+  glacier_cfg->cfg = malloc(sizeof(config_t));
+  cfg = glacier_cfg->cfg;
 
   config_init(cfg);
 
@@ -51,7 +54,10 @@ GlacierCfg *cfg_read(char *config_path) {
     glacier_cfg->audio_passthrough = true;
   }
 
-  if (cfg != NULL) config_destroy(cfg);
+  check(config_lookup_string(
+    cfg, "font_filepath", &glacier_cfg->font_filepath),
+    "Could not read font filepath setting");
+
   return glacier_cfg;
  error:
   if (cfg != NULL) config_destroy(cfg);
@@ -59,9 +65,10 @@ GlacierCfg *cfg_read(char *config_path) {
   return NULL;
 };
 
-void cfg_destroy(GlacierCfg *cfg) {
-  check(cfg != NULL, "Invalid config");
-  free(cfg);
+void cfg_destroy(GlacierCfg *gcfg) {
+  check(gcfg != NULL, "Invalid config");
+  if (gcfg->cfg != NULL) config_destroy(gcfg->cfg);
+  free(gcfg);
   return;
 error:
   log_err("Could not clean up config");
