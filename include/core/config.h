@@ -11,6 +11,7 @@ typedef struct GlacierCfg {
   AudioBusChannelCount input_bus_channels;
 
   const char *font_filepath;
+  uint8_t font_size;
 
   config_t *cfg;
 

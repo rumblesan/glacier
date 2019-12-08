@@ -57,6 +57,12 @@ GlacierCfg *cfg_read(char *config_path) {
   check(config_lookup_string(
     cfg, "font_filepath", &glacier_cfg->font_filepath),
     "Could not read font filepath setting");
+  int font_size = 0;
+  check(config_lookup_int(
+    cfg, "font_size", &font_size),
+    "Could not read font size setting");
+  check(font_size > 0, "font size must be greater than 0");
+  glacier_cfg->font_size = font_size;
 
   return glacier_cfg;
  error:

@@ -168,7 +168,7 @@ int main (int argc, char *argv[]) {
     record_buffer_channels
   );
 
-  ui = ui_create("Glacier", cfg->font_filepath, 24);
+  ui = ui_create("Glacier", cfg->font_filepath, cfg->font_size);
 
   app = app_state_create(glacier, ui, cfg);
 
