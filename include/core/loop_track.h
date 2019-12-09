@@ -10,6 +10,7 @@
 typedef enum loop_track_action {
   LoopTrack_Action_Playback,
   LoopTrack_Action_Record,
+  LoopTrack_Action_Clear,
   LoopTrack_Action_ToggleOverdubbing,
 } LoopTrackAction;
 

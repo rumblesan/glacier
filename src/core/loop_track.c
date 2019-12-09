@@ -57,8 +57,13 @@ LoopTrackState _lt_stopped_handle_action(LoopTrack *lt, LoopTrackAction action) 
       lt->state = LoopTrack_State_Armed;
       break;
     case LoopTrack_Action_ToggleOverdubbing:
+      // FIXME is this the case?
       // Can only change overdubbing when stopped or playing
       lt->overdubbing_enabled = !lt->overdubbing_enabled;
+      lt->state = LoopTrack_State_Stopped;
+      break;
+    case LoopTrack_Action_Clear:
+      ab_clear_buffer(lt->buffer);
       lt->state = LoopTrack_State_Stopped;
       break;
   }
@@ -82,6 +87,10 @@ LoopTrackState _lt_armed_handle_action(LoopTrack *lt, LoopTrackAction action) {
       // Can only change overdubbing when stopped or playing
       lt->state = LoopTrack_State_Armed;
       break;
+    case LoopTrack_Action_Clear:
+      ab_clear_buffer(lt->buffer);
+      lt->state = LoopTrack_State_Stopped;
+      break;
   }
   return lt->state;
 }
@@ -97,6 +106,10 @@ LoopTrackState _lt_cued_handle_action(LoopTrack *lt, LoopTrackAction action) {
       break;
     case LoopTrack_Action_ToggleOverdubbing:
       // Can only change overdubbing when stopped or playing
+      break;
+    case LoopTrack_Action_Clear:
+      ab_clear_buffer(lt->buffer);
+      lt->state = LoopTrack_State_Stopped;
       break;
   }
   return lt->state;
@@ -115,6 +128,10 @@ LoopTrackState _lt_recording_handle_action(LoopTrack *lt, LoopTrackAction action
       // Can only change overdubbing when stopped or playing
       lt->state = LoopTrack_State_Recording;
       break;
+    case LoopTrack_Action_Clear:
+      ab_clear_buffer(lt->buffer);
+      lt->state = LoopTrack_State_Stopped;
+      break;
   }
   return lt->state;
 }
@@ -132,6 +149,10 @@ LoopTrackState _lt_concluding_handle_action(LoopTrack *lt, LoopTrackAction actio
     case LoopTrack_Action_ToggleOverdubbing:
       // Can only change overdubbing when stopped or playing
       lt->state = LoopTrack_State_Concluding;
+      break;
+    case LoopTrack_Action_Clear:
+      ab_clear_buffer(lt->buffer);
+      lt->state = LoopTrack_State_Stopped;
       break;
   }
   return lt->state;
@@ -156,6 +177,10 @@ LoopTrackState _lt_playing_handle_action(LoopTrack *lt, LoopTrackAction action) 
       lt->overdubbing_enabled = !lt->overdubbing_enabled;
       lt->state = LoopTrack_State_Playing;
       break;
+    case LoopTrack_Action_Clear:
+      ab_clear_buffer(lt->buffer);
+      lt->state = LoopTrack_State_Stopped;
+      break;
   }
   return lt->state;
 }
@@ -172,6 +197,10 @@ LoopTrackState _lt_overdubbing_handle_action(LoopTrack *lt, LoopTrackAction acti
     case LoopTrack_Action_ToggleOverdubbing:
       // Can only change overdubbing when stopped or playing
       lt->state = LoopTrack_State_Overdubbing;
+      break;
+    case LoopTrack_Action_Clear:
+      ab_clear_buffer(lt->buffer);
+      lt->state = LoopTrack_State_Stopped;
       break;
   }
   return lt->state;
