@@ -23,6 +23,8 @@ void ab_finish_recording(AudioBuffer *ab);
 
 void ab_cancel_recording(AudioBuffer *ab);
 
+void ab_clear_buffer(AudioBuffer *ab);
+
 void ab_stop_playing(AudioBuffer *ab);
 
 bool ab_record(AudioBuffer *ab, const SAMPLE **input_samples, uint32_t frame_count, uint32_t offset);

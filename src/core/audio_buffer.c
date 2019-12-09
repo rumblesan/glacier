@@ -43,6 +43,12 @@ void ab_cancel_recording(AudioBuffer *ab) {
   ab->playback_head_pos = 0;
 }
 
+void ab_clear_buffer(AudioBuffer *ab) {
+  ab->length = 0;
+  ab->record_head_pos = 0;
+  ab->playback_head_pos = 0;
+}
+
 void ab_stop_playing(AudioBuffer *ab) {
   ab->playback_head_pos = 0;
 }
