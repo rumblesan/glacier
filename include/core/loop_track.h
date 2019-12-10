@@ -22,7 +22,6 @@ typedef enum loop_track_state {
   LoopTrack_State_Recording,
   LoopTrack_State_Concluding,
   LoopTrack_State_Playing,
-  LoopTrack_State_Overdubbing,
 } LoopTrackState;
 
 typedef enum loop_track_state_change {
@@ -41,8 +40,6 @@ typedef struct LoopTrack {
   AudioBuffer *buffer;
 
   LoopTrackState state;
-
-  bool overdubbing_enabled;
 
 } LoopTrack;
 
