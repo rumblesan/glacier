@@ -61,18 +61,41 @@ int playback_handler(
   return 0;
 }
 
+int clear_handler(
+  const char *path, const char *types, lo_arg **argv,
+  int argc, void *data, void *user_data
+) {
+  uint8_t track_id = argv[0]->i;
+  printf("Clear Action for track %d\n", track_id);
+  send_action(user_data, track_id, LoopTrack_Action_Clear);
+  fflush(stdout);
+  return 0;
+}
+
+int overdubbing_handler(
+  const char *path, const char *types, lo_arg **argv,
+  int argc, void *data, void *user_data
+) {
+  uint8_t track_id = argv[0]->i;
+  printf("Toggling Overdubbing for track %d\n", track_id);
+  send_action(user_data, track_id, LoopTrack_Action_ToggleOverdubbing);
+  fflush(stdout);
+  return 0;
+}
+
 OSCServer osc_start_server(AppState *app) {
   printf("Setting up OSC server\n");
   lo_server_thread osc_server = lo_server_thread_new("7770", error);
 
   lo_server_thread_add_method(osc_server, "/track/action/record", "i", record_handler, app);
   lo_server_thread_add_method(osc_server, "/track/action/playback", "i", playback_handler, app);
+  lo_server_thread_add_method(osc_server, "/track/action/clear", "i", clear_handler, app);
+  lo_server_thread_add_method(osc_server, "/track/action/overdubbing", "i", overdubbing_handler, app);
   lo_server_thread_add_method(osc_server, "/quit", NULL, quit_handler, app);
 
   lo_server_thread_start(osc_server);
 
   return osc_server;
-
 }
 
 void osc_stop_server(OSCServer osc_server) {
