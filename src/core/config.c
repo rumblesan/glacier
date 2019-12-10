@@ -48,11 +48,19 @@ GlacierCfg *cfg_read(char *config_path) {
   check(config_lookup_bool(
     cfg, "audio_passthrough", &audio_passthrough),
     "Could not read audio passthrough setting");
-  if (audio_passthrough == 0) {
-    glacier_cfg->audio_passthrough = false;
-  } else {
-    glacier_cfg->audio_passthrough = true;
-  }
+  glacier_cfg->audio_passthrough = audio_passthrough != 0;
+
+  int midi_enabled = 0;
+  check(config_lookup_bool(
+    cfg, "enable_midi", &midi_enabled),
+    "Could not read midi enabled setting");
+  glacier_cfg->midi_enabled = midi_enabled != 0;
+
+  int osc_enabled = 0;
+  check(config_lookup_bool(
+    cfg, "enable_osc", &osc_enabled),
+    "Could not read osc enabled setting");
+  glacier_cfg->osc_enabled = osc_enabled != 0;
 
   check(config_lookup_string(
     cfg, "font_filepath", &glacier_cfg->font_filepath),

@@ -16,6 +16,8 @@ typedef struct GlacierCfg {
   config_t *cfg;
 
   bool audio_passthrough;
+  bool midi_enabled;
+  bool osc_enabled;
 } GlacierCfg;
 
 GlacierCfg *cfg_read(char *config_path);

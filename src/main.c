@@ -172,11 +172,10 @@ int main (int argc, char *argv[]) {
 
   app = app_state_create(glacier, ui, cfg);
 
-  midi_io = midi_io_create(
-    app->midi_control_bus, app->midi_control_bus_buffer
-  );
-
-  osc_server = osc_start_server(app);
+  if (cfg->osc_enabled) {
+    log_info("Starting OSC server");
+    osc_server = osc_start_server(app);
+  }
 
   gc = gc_create(app->control_bus_garbage, app->control_bus_garbage_buffer);
   check(gc_start(gc), "Couldn't start garbage collector");
@@ -186,16 +185,21 @@ int main (int argc, char *argv[]) {
     "Could not start Audio IO"
   );
 
-  check(midi_io_run(midi_io), "Could not start Midi IO");
+  if (cfg->midi_enabled) {
+    midi_io = midi_io_create(
+      app->midi_control_bus, app->midi_control_bus_buffer
+    );
+    check(midi_io_run(midi_io), "Could not start Midi IO");
+  }
 
   // UI blocks main thread
   ui_display(app);
 
   audio_io_destroy(audio_io);
-  midi_io_destroy(midi_io);
+  if (midi_io != NULL) midi_io_destroy(midi_io);
 
   gc_destroy(gc);
-  osc_stop_server(osc_server);
+  if (osc_server != NULL) osc_stop_server(osc_server);
   app_state_destroy(app);
   glacier_destroy(glacier);
   ui_destroy(ui);
