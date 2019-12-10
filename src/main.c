@@ -134,8 +134,9 @@ error:
 
 /*******************************************************************/
 int main (int argc, char *argv[]) {
-  // Glacier variables
+  int exitValue = EXIT_SUCCESS;
 
+  // Glacier variables
   GlacierCfg *cfg = NULL;
 
   GarbageCollector *gc = NULL;
@@ -195,36 +196,27 @@ int main (int argc, char *argv[]) {
   // UI blocks main thread
   ui_display(app);
 
-  audio_io_destroy(audio_io);
-  if (midi_io != NULL) midi_io_destroy(midi_io);
+  printf("Exiting Glacier\n");
 
-  gc_destroy(gc);
-  if (osc_server != NULL) osc_stop_server(osc_server);
-  app_state_destroy(app);
-  glacier_destroy(glacier);
-  ui_destroy(ui);
-  abus_destroy(input_bus);
-  cfg_destroy(cfg);
-
-  TTF_Quit();
-  SDL_Quit();
-
-  printf("Finished.");
-  return 0;
+  goto cleanup;
 
 error:
-  if (audio_io != NULL) { audio_io_destroy(audio_io); }
-  if (midi_io != NULL) { midi_io_destroy(midi_io); }
-  if (gc != NULL) { gc_destroy(gc); }
-  if (osc_server != NULL) { osc_stop_server(osc_server); }
-  if (app != NULL) { app_state_destroy(app); }
-  if (glacier != NULL) { glacier_destroy(glacier); }
-  if (ui != NULL) { ui_destroy(ui); }
-  if (input_bus != NULL) { abus_destroy(input_bus); }
-  if (cfg != NULL) { cfg_destroy(cfg); }
+  printf("Exiting Glacier with failure\n");
+  exitValue = EXIT_FAILURE;
+
+cleanup:
+  if (audio_io != NULL) audio_io_destroy(audio_io);
+  if (midi_io != NULL) midi_io_destroy(midi_io);
+  if (gc != NULL) gc_destroy(gc);
+  if (osc_server != NULL) osc_stop_server(osc_server);
+  if (app != NULL) app_state_destroy(app);
+  if (glacier != NULL) glacier_destroy(glacier);
+  if (ui != NULL) ui_destroy(ui);
+  if (input_bus != NULL) abus_destroy(input_bus);
+  if (cfg != NULL) cfg_destroy(cfg);
 
   TTF_Quit();
   SDL_Quit();
 
-  return -1;
+  return exitValue;
 }
