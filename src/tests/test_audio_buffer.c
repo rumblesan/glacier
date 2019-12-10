@@ -53,23 +53,23 @@ void test_audio_buffer_record() {
   uint32_t internal_error_samps = 0;
   for (uint8_t c = 0; c < channels; c++) {
     for (uint32_t s = 0; s < frame_count; s++) {
-      if (!almostEqual(buffer_samples[c][s], 0)) {
+      if (!almostEqual(buffer_samples[c][s], 0.75)) {
         internal_error_samps += 1;
       }
     }
   }
-  mu_assert(internal_error_samps == 0, "All recorded samples should be greater than zero");
+  mu_assert(internal_error_samps == 0, "All recorded samples should equal 0.75");
 
   ab_playback_mix(buffer, output_audio, frame_count, 0);
   uint32_t ext_error_samps = 0;
   for (uint8_t c = 0; c < channels; c++) {
     for (uint32_t s = 0; s < frame_count; s++) {
-      if (!almostEqual(output_audio[c][s], 0)) {
+      if (!almostEqual(output_audio[c][s], 0.75)) {
         ext_error_samps += 1;
       }
     }
   }
-  mu_assert(ext_error_samps == 0, "All output samples should be greater than zero");
+  mu_assert(ext_error_samps == 0, "All output samples should equal 0.75");
 
   uint32_t recorded_frames = 40 * 2;
   mu_assert(buffer->length == recorded_frames, "Audio buffer should have recorded %d frames", recorded_frames);
