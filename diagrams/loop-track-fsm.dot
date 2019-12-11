@@ -4,35 +4,40 @@ digraph G {
   Armed [ shape="oval" ];
   hasAudio [ label="has recorded audio", shape="diamond" ];
   Cued [ shape="oval" ];
-  playSyncLogic [ label="Timing Sync Logic", shape="box" ];
+  wasPlaying [ label="previously Playing", shape="diamond" ];
   Recording [ shape="oval" ];
   Concluding [ shape="oval" ];
   Playing [ shape="oval" ];
-  overdubActive [ label="overdubbing is on", shape="diamond" ];
-  Overdubbing [ shape="oval" ];
 
   Stopped -> Armed [ label="Record\nAction" ];
+  Stopped -> Stopped [ label="Clear\nAction" ];
   Stopped -> hasAudio [ label="Playback\nAction" ];
+
   hasAudio -> Stopped [ label="no" ];
   hasAudio -> Cued [ label="yes" ];
 
-  Cued -> playSyncLogic [ label="Phrase Sync\nAction" ];
-  playSyncLogic -> Playing;
+  Cued -> Playing [ label="Phrase Sync\nAction" ];
   Cued -> Stopped [ label="Playback\nAction" ];
+  Cued -> Armed [ label="Record\nAction" ];
+  Cued -> Stopped [ label="Clear\nAction" ];
 
-  Armed -> Stopped [ label="Playback\nAction" ];
+  Armed -> wasPlaying [ label="Playback\nAction" ];
   Armed -> Recording [ label="Phrase Sync\nAction" ];
+  Armed -> Stopped [ label="Clear\nAction" ];
 
-  Recording -> Stopped [ label="Playback\nAction" ];
+  Recording -> wasPlaying [ label="Playback\nAction" ];
   Recording -> Concluding [ label="Record\nAction" ];
-  Concluding -> playSyncLogic [ label="Phrase Sync\nAction" ];
+  Recording -> Stopped [ label="Clear\nAction" ];
+
+  wasPlaying -> Stopped [ label="no" ];
+  wasPlaying -> Playing [ label="yes" ];
+
+  Concluding -> wasPlaying [ label="Playback\nAction" ];
+  Concluding -> Playing [ label="Phrase Sync\nAction" ];
+  Concluding -> Stopped [ label="Clear\nAction" ];
 
   Playing -> Stopped [ label="Playback\nAction" ];
-  Playing -> overdubActive [ label="Record\nAction" ];
-  overdubActive -> Recording [ label="no" ];
-  overdubActive -> Overdubbing [ label="yes" ];
-
-  Overdubbing -> Stopped [ label="Playback\nAction" ];
-  Overdubbing -> Playing [ label="Record\nAction" ];
+  Playing -> Stopped [ label="Clear\nAction" ];
+  Playing -> Armed [ label="Record\nAction" ];
 
 }

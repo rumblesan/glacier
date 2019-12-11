@@ -110,32 +110,48 @@ void test_loop_track_cancel_recording() {
   mu_assert(loop_track != NULL, "Could not create Loop Track");
 
   lt_handle_action(loop_track, LoopTrack_Action_Record);
-  mu_assert(loop_track->state == LoopTrack_State_Armed, "Loop Track should be in Armed state");
 
   SyncTimingMessage sync_message = {SyncControl_Interval_Whole, 0};
 
-  LoopTrackStateChange state_change = lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
-  mu_assert(state_change == LoopTrack_Change_Started_Recording, "Loop Track should have started Recording");
-  mu_assert(loop_track->state == LoopTrack_State_Recording, "Loop Track should be in Recording state");
+  lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
 
   // Continue syncing
+  sync_message.interval = SyncControl_Interval_Whole;
+  sync_message.offset = 0;
+  // record 3 * frame_count samples
+  lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
+  lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
+  lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
+  lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
+  lt_handle_action(loop_track, LoopTrack_Action_Record);
+
+  // Should now be playing and have played back frame_count samples
+  lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
+  mu_assert(lt_is_playing(loop_track), "Loop Track should be playing");
+  mu_assert(lt_playhead_pos(loop_track) == frame_count, "Loop Track playhead should be at %d", frame_count);
+
   sync_message.interval = SyncControl_Interval_None;
   sync_message.offset = 0;
-  state_change = lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
-  mu_assert(state_change == LoopTrack_Change_None, "Loop Track should not have changed state");
-  mu_assert(loop_track->state == LoopTrack_State_Recording, "Loop Track should be in Recording state");
+  // play a bit more then start recording again
+  lt_handle_action(loop_track, LoopTrack_Action_Record);
+  lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
 
-  LoopTrackState loop_state = lt_handle_action(loop_track, LoopTrack_Action_Playback);
-  mu_assert(loop_state == LoopTrack_State_Stopped, "Loop Track should be in Stopped state");
+  sync_message.interval = SyncControl_Interval_Whole;
+  sync_message.offset = 0;
+  lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
+  mu_assert(lt_is_recording(loop_track), "Loop Track should be recording");
+  mu_assert(lt_recordhead_pos(loop_track) == frame_count, "Loop Track recordhead should be at %d", frame_count);
+  mu_assert(lt_playhead_pos(loop_track) == frame_count, "Loop Track playhead should be at %d not %d", frame_count, lt_playhead_pos(loop_track));
 
-  mu_assert(!lt_is_playing(loop_track), "Loop Track should not be playing");
-
-  uint32_t expected_length = 0;
-  uint32_t recorded_length = lt_length(loop_track);
-  mu_assert(recorded_length == expected_length, "Should have recorded %d not %d", expected_length, recorded_length);
-
+  sync_message.interval = SyncControl_Interval_None;
+  sync_message.offset = 0;
+  lt_handle_audio(loop_track, sync_message, input_audio, output_audio, frame_count);
   lt_handle_action(loop_track, LoopTrack_Action_Playback);
-  mu_assert(loop_track->state == LoopTrack_State_Stopped, "Loop Track should remain in Stopped state");
+  mu_assert(!lt_is_recording(loop_track), "Loop Track should not be recording");
+  mu_assert(lt_is_playing(loop_track), "Loop Track should be playing");
+  mu_assert(lt_recordhead_pos(loop_track) == 0, "Loop Track recordhead should be at %d", 0);
+  mu_assert(lt_playhead_pos(loop_track) == 2 * frame_count, "Loop Track playhead should be at %d", 2 * frame_count);
+
 
   lt_destroy(loop_track);
   free(input_audio);

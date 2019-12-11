@@ -40,6 +40,9 @@ typedef struct LoopTrack {
   AudioBuffer *buffer;
 
   LoopTrackState state;
+  LoopTrackState previous_state;
+
+  bool was_playing_last;
 
 } LoopTrack;
 
@@ -52,6 +55,8 @@ LoopTrack *lt_create(uint8_t buffer_id, uint32_t max_length, uint8_t channels);
 LoopTrackState lt_handle_action(LoopTrack *lc, LoopTrackAction action);
 
 bool lt_is_playing(LoopTrack *lc);
+
+bool lt_is_recording(LoopTrack *lc);
 
 bool lt_is_empty(LoopTrack *lc);
 

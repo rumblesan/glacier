@@ -24,6 +24,8 @@ typedef struct AudioBuffer {
 
 AudioBuffer *ab_create(uint32_t max_length, uint8_t channels);
 
+void ab_start_recording(AudioBuffer *ab);
+
 void ab_finish_recording(AudioBuffer *ab);
 
 void ab_cancel_recording(AudioBuffer *ab);
@@ -39,6 +41,8 @@ SAMPLE **ab_get_samples(AudioBuffer *ab);
 bool ab_record(AudioBuffer *ab, const SAMPLE **input_samples, uint32_t frame_count, uint32_t offset);
 
 void ab_playback_mix(AudioBuffer *ab, SAMPLE **output_samples, uint32_t frame_count, uint32_t offset);
+
+void ab_scrub_playhead(AudioBuffer *ab, uint32_t frame_count);
 
 void ab_tidy(AudioBuffer *ab, uint8_t crossing_count, uint32_t fade_length);
 

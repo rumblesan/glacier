@@ -42,6 +42,11 @@ error:
   return NULL;
 }
 
+void ab_start_recording(AudioBuffer *ab) {
+  ab->record_head_pos = 0;
+  ab->playback_head_pos = 0;
+}
+
 void ab_finish_recording(AudioBuffer *ab) {
   ab->length = ab->record_head_pos;
   ab->record_head_pos = 0;
@@ -50,7 +55,6 @@ void ab_finish_recording(AudioBuffer *ab) {
 }
 
 void ab_cancel_recording(AudioBuffer *ab) {
-  // TODO probably need better logic to reset playback position
   ab->record_head_pos = 0;
 }
 
@@ -135,6 +139,15 @@ void ab_playback_mix(AudioBuffer *ab, SAMPLE **output_samples, uint32_t frame_co
         output_samples[c][i + offset] += active_buffer[c][ab->playback_head_pos + i];
       }
     }
+    ab->playback_head_pos += frame_count;
+  }
+}
+
+void ab_scrub_playhead(AudioBuffer *ab, uint32_t frame_count) {
+  if (ab->length <= 0) return;
+  if (ab->playback_head_pos + frame_count >= ab->length) {
+    ab->playback_head_pos = (ab->playback_head_pos + frame_count) % ab->length;
+  } else {
     ab->playback_head_pos += frame_count;
   }
 }

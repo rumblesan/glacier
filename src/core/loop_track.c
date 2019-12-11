@@ -35,33 +35,41 @@ LoopTrack *lt_create(uint8_t buffer_id, uint32_t max_length, uint8_t channels) {
   lt->buffer = buffer;
 
   lt->state = LoopTrack_State_Stopped;
+  lt->previous_state = LoopTrack_State_Stopped;
 
   return lt;
 error:
   return NULL;
 }
 
+static inline void _lt_set_state(LoopTrack *lt, LoopTrackState new_state) {
+  if (new_state == LoopTrack_State_Stopped) {
+    lt->was_playing_last = false;
+  } else if (new_state == LoopTrack_State_Playing) {
+    lt->was_playing_last = true;
+  }
+  lt->previous_state = lt->state;
+  lt->state = new_state;
+}
 // Internal functions
 LoopTrackState _lt_stopped_handle_action(LoopTrack *lt, LoopTrackAction action) {
   switch(action) {
     case LoopTrack_Action_Playback:
       if (lt->buffer->length > 0) {
-        lt->state = LoopTrack_State_Cued;
+        _lt_set_state(lt, LoopTrack_State_Cued);
       } else {
-        lt->state = LoopTrack_State_Stopped;
+        _lt_set_state(lt, LoopTrack_State_Stopped);
       }
       break;
     case LoopTrack_Action_Record:
-      lt->state = LoopTrack_State_Armed;
+      _lt_set_state(lt, LoopTrack_State_Armed);
       break;
     case LoopTrack_Action_ToggleOverdubbing:
-      // FIXME
-      // Can only change overdubbing when stopped or playing?
       ab_toggle_overdubbing(lt->buffer);
       break;
     case LoopTrack_Action_Clear:
       ab_clear_buffer(lt->buffer);
-      lt->state = LoopTrack_State_Stopped;
+      _lt_set_state(lt, LoopTrack_State_Stopped);
       break;
   }
   return lt->state;
@@ -71,21 +79,18 @@ LoopTrackState _lt_armed_handle_action(LoopTrack *lt, LoopTrackAction action) {
   switch(action) {
     case LoopTrack_Action_Playback:
       if (lt->buffer->length > 0) {
-        lt->state = LoopTrack_State_Stopped;
+        _lt_set_state(lt, LoopTrack_State_Stopped);
       }
       break;
     case LoopTrack_Action_Record:
-      // FIXME
-      // Do nothing?
+      // do nothing
       break;
     case LoopTrack_Action_ToggleOverdubbing:
-      // FIXME
-      // Can only change overdubbing when stopped or playing?
       ab_toggle_overdubbing(lt->buffer);
       break;
     case LoopTrack_Action_Clear:
       ab_clear_buffer(lt->buffer);
-      lt->state = LoopTrack_State_Stopped;
+      _lt_set_state(lt, LoopTrack_State_Stopped);
       break;
   }
   return lt->state;
@@ -94,20 +99,18 @@ LoopTrackState _lt_armed_handle_action(LoopTrack *lt, LoopTrackAction action) {
 LoopTrackState _lt_cued_handle_action(LoopTrack *lt, LoopTrackAction action) {
   switch(action) {
     case LoopTrack_Action_Playback:
-      lt->state = LoopTrack_State_Stopped;
+      _lt_set_state(lt, LoopTrack_State_Stopped);
       break;
     case LoopTrack_Action_Record:
-      // FIXME undefined currently
+      _lt_set_state(lt, LoopTrack_State_Armed);
       return LoopTrack_State_Error;
       break;
     case LoopTrack_Action_ToggleOverdubbing:
-      // FIXME
-      // Can only change overdubbing when stopped or playing?
       ab_toggle_overdubbing(lt->buffer);
       break;
     case LoopTrack_Action_Clear:
       ab_clear_buffer(lt->buffer);
-      lt->state = LoopTrack_State_Stopped;
+      _lt_set_state(lt, LoopTrack_State_Stopped);
       break;
   }
   return lt->state;
@@ -116,20 +119,22 @@ LoopTrackState _lt_cued_handle_action(LoopTrack *lt, LoopTrackAction action) {
 LoopTrackState _lt_recording_handle_action(LoopTrack *lt, LoopTrackAction action) {
   switch(action) {
     case LoopTrack_Action_Playback:
-      lt->state = LoopTrack_State_Stopped;
       ab_cancel_recording(lt->buffer);
+      if (lt->was_playing_last) {
+        _lt_set_state(lt, LoopTrack_State_Playing);
+      } else {
+        _lt_set_state(lt, LoopTrack_State_Stopped);
+      }
       break;
     case LoopTrack_Action_Record:
-      lt->state = LoopTrack_State_Concluding;
+      _lt_set_state(lt, LoopTrack_State_Concluding);
       break;
     case LoopTrack_Action_ToggleOverdubbing:
-      // FIXME
-      // Can only change overdubbing when stopped or playing?
-      // ab_toggle_overdubbing(lt->buffer);
+      // Can't change overdubbing whilst already recording
       break;
     case LoopTrack_Action_Clear:
       ab_clear_buffer(lt->buffer);
-      lt->state = LoopTrack_State_Stopped;
+      _lt_set_state(lt, LoopTrack_State_Stopped);
       break;
   }
   return lt->state;
@@ -138,20 +143,21 @@ LoopTrackState _lt_recording_handle_action(LoopTrack *lt, LoopTrackAction action
 LoopTrackState _lt_concluding_handle_action(LoopTrack *lt, LoopTrackAction action) {
   switch(action) {
     case LoopTrack_Action_Playback:
-      // TODO Possibly should stop?
-      // do nothing
+      if (lt->was_playing_last) {
+        _lt_set_state(lt, LoopTrack_State_Playing);
+      } else {
+        _lt_set_state(lt, LoopTrack_State_Stopped);
+      }
       break;
     case LoopTrack_Action_Record:
       // Do nothing. Covers double presses
       break;
     case LoopTrack_Action_ToggleOverdubbing:
-      // FIXME
-      // Can only change overdubbing when stopped or playing?
-      // ab_toggle_overdubbing(lt->buffer);
+      // Can't change overdubbing whilst already recording
       break;
     case LoopTrack_Action_Clear:
       ab_clear_buffer(lt->buffer);
-      lt->state = LoopTrack_State_Stopped;
+      _lt_set_state(lt, LoopTrack_State_Stopped);
       break;
   }
   return lt->state;
@@ -160,21 +166,18 @@ LoopTrackState _lt_concluding_handle_action(LoopTrack *lt, LoopTrackAction actio
 LoopTrackState _lt_playing_handle_action(LoopTrack *lt, LoopTrackAction action) {
   switch(action) {
     case LoopTrack_Action_Playback:
-      // TODO possibly going to need some sync timing logic here?
       ab_stop_playing(lt->buffer);
-      lt->state = LoopTrack_State_Stopped;
+      _lt_set_state(lt, LoopTrack_State_Stopped);
       break;
     case LoopTrack_Action_Record:
-      lt->state = LoopTrack_State_Armed;
+      _lt_set_state(lt, LoopTrack_State_Armed);
       break;
     case LoopTrack_Action_ToggleOverdubbing:
-      // FIXME
-      // Can only change overdubbing when stopped or playing?
       ab_toggle_overdubbing(lt->buffer);
       break;
     case LoopTrack_Action_Clear:
       ab_clear_buffer(lt->buffer);
-      lt->state = LoopTrack_State_Stopped;
+      _lt_set_state(lt, LoopTrack_State_Stopped);
       break;
   }
   return lt->state;
@@ -203,6 +206,10 @@ bool lt_is_playing(LoopTrack *lt) {
   return lt->state == LoopTrack_State_Playing;
 }
 
+bool lt_is_recording(LoopTrack *lt) {
+  return lt->state == LoopTrack_State_Recording;
+}
+
 bool lt_is_empty(LoopTrack *lt) {
   return lt->buffer->length <= 0;
 }
@@ -219,7 +226,7 @@ uint32_t lt_playhead_pos(LoopTrack *lc) {
   return lc->buffer->playback_head_pos;
 }
 
-LoopTrackStateChange _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE **input_samples, SAMPLE **output_samples, uint32_t frame_count) {
+LoopTrackStateChange _lt_concluding_handle_audio(LoopTrack *lt, SyncTimingMessage sync_message, const SAMPLE **input_samples, SAMPLE **output_samples, uint32_t frame_count) {
 
   switch (sync_message.interval) {
     case SyncControl_Interval_None:
@@ -246,7 +253,7 @@ LoopTrackStateChange _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync
         ab_finish_recording(lt->buffer);
         ab_tidy(lt->buffer, 5, 1000);
         ab_playback_mix(lt->buffer, output_samples, frame_count - sync_message.offset, sync_message.offset);
-        lt->state = LoopTrack_State_Playing;
+        _lt_set_state(lt, LoopTrack_State_Playing);
         return LoopTrack_Change_Finished_Recording;
       }
     case SyncControl_Interval_Whole:
@@ -257,7 +264,7 @@ LoopTrackStateChange _lt_handle_concluding(LoopTrack *lt, SyncTimingMessage sync
       ab_finish_recording(lt->buffer);
       ab_tidy(lt->buffer, 5, 1000);
       ab_playback_mix(lt->buffer, output_samples, frame_count - sync_message.offset, sync_message.offset);
-      lt->state = LoopTrack_State_Playing;
+      _lt_set_state(lt, LoopTrack_State_Playing);
       return LoopTrack_Change_Finished_Recording;
   }
 }
@@ -273,10 +280,12 @@ LoopTrackStateChange lt_handle_audio(LoopTrack *lt, SyncTimingMessage sync_messa
       // if the buffer is overdubbing then continue playing back
       if (lt->buffer->overdub) {
         ab_playback_mix(lt->buffer, output_samples, frame_count, 0);
+      } else {
+        ab_scrub_playhead(lt->buffer, frame_count);
       }
       break;
     case LoopTrack_State_Concluding:
-      return _lt_handle_concluding(lt, sync_message, input_samples, output_samples, frame_count);
+      return _lt_concluding_handle_audio(lt, sync_message, input_samples, output_samples, frame_count);
       break;
     case LoopTrack_State_Playing:
       ab_playback_mix(lt->buffer, output_samples, frame_count, 0);
@@ -284,11 +293,14 @@ LoopTrackStateChange lt_handle_audio(LoopTrack *lt, SyncTimingMessage sync_messa
     case LoopTrack_State_Armed:
       if (sync_message.interval == SyncControl_Interval_Whole) {
         ab_playback_mix(lt->buffer, output_samples, sync_message.offset, 0);
+        ab_start_recording(lt->buffer);
         ab_record(lt->buffer, input_samples, frame_count - sync_message.offset, sync_message.offset);
         if (lt->buffer->overdub) {
           ab_playback_mix(lt->buffer, output_samples, frame_count - sync_message.offset, sync_message.offset);
+        } else {
+          ab_scrub_playhead(lt->buffer, frame_count - sync_message.offset);
         }
-        lt->state = LoopTrack_State_Recording;
+        _lt_set_state(lt, LoopTrack_State_Recording);
         return LoopTrack_Change_Started_Recording;
       } else {
         ab_playback_mix(lt->buffer, output_samples, frame_count, 0);
@@ -297,7 +309,7 @@ LoopTrackStateChange lt_handle_audio(LoopTrack *lt, SyncTimingMessage sync_messa
     case LoopTrack_State_Cued:
       if (sync_message.interval == SyncControl_Interval_Whole) {
         ab_playback_mix(lt->buffer, output_samples, frame_count - sync_message.offset, sync_message.offset);
-        lt->state = LoopTrack_State_Playing;
+        _lt_set_state(lt, LoopTrack_State_Playing);
         return LoopTrack_Change_Started_Playing;
       }
       break;
