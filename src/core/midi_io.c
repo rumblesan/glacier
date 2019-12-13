@@ -50,6 +50,8 @@ void process_midi(PtTimestamp timestamp, void *userData) {
   PmEvent buffer;
   int status, data1, data2 = 0;
 
+  uint8_t active_track = 0;
+
   do {
     result = Pm_Poll(mio->midi_in);
     if (result == TRUE) {
@@ -79,6 +81,27 @@ void process_midi(PtTimestamp timestamp, void *userData) {
             break;
           case 8:
             send_midi_action(mio, 2, LoopTrack_Action_Playback);
+            break;
+          case 11:
+            active_track = 0;
+            break;
+          case 12:
+            active_track = 1;
+            break;
+          case 13:
+            active_track = 2;
+            break;
+          case 14:
+            send_midi_action(mio, active_track, LoopTrack_Action_Record);
+            break;
+          case 15:
+            send_midi_action(mio, active_track, LoopTrack_Action_Playback);
+            break;
+          case 16:
+            send_midi_action(mio, active_track, LoopTrack_Action_Clear);
+            break;
+          case 17:
+            send_midi_action(mio, active_track, LoopTrack_Action_ToggleOverdubbing);
             break;
           default:
             break;
