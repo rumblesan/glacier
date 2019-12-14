@@ -50,6 +50,16 @@ bool is_falsey(Value value) {
   return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
+bool values_equal(Value a, Value b) {
+  if (a.type != b.type) return false;
+
+  switch (a.type) {
+    case VAL_BOOL:   return AS_BOOL(a) == AS_BOOL(b);
+    case VAL_NIL:    return true;
+    case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
+  }
+}
+
 GrainVMResult run(GrainVM *gvm) {
   GrainVM vm = *gvm;
 #define READ_BYTE() (*vm.ip++)
@@ -91,6 +101,14 @@ GrainVMResult run(GrainVM *gvm) {
         push(gvm, NUMBER_VAL(-AS_NUMBER(pop(gvm))));
         break;
       case OP_NOT: push(gvm, BOOL_VAL(is_falsey(pop(gvm)))); break;
+      case OP_EQUAL: {
+        Value b = pop(gvm);
+        Value a = pop(gvm);
+        push(gvm, BOOL_VAL(values_equal(a, b)));
+        break;
+      }
+      case OP_GREATER:   BINARY_OP(BOOL_VAL, >); break;
+      case OP_LESSER:   BINARY_OP(BOOL_VAL, <); break;
       case OP_CONSTANT: {
         Value constant = READ_CONSTANT();
         push(gvm, constant);
