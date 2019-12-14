@@ -28,7 +28,7 @@ typedef struct {
   Value stack[GRAINVM_STACK_SIZE];
   Value* stack_top;
 
-  Value exit_code;
+  int8_t exit_code;
 
   GrainVMBlock *block;
 
