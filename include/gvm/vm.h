@@ -5,7 +5,7 @@
 #include "gvm/block.h"
 #include "gvm/value.h"
 
-#define GRAINVM_STACK_SIZE 256
+#define VM_STACK_SIZE 256
 
 typedef enum {
   OP_NIL,
@@ -22,34 +22,34 @@ typedef enum {
   OP_GREATER,
   OP_LESSER,
   OP_EXIT,
-} GrainVMOps;
+} VMOps;
 
 typedef enum {
   INTERPRET_OK,
   INTERPRET_COMPILE_ERROR,
   INTERPRET_RUNTIME_ERROR
-} GrainVMResult;
+} VMResult;
 
 typedef struct {
 
-  Value stack[GRAINVM_STACK_SIZE];
+  Value stack[VM_STACK_SIZE];
   Value* stack_top;
 
   int8_t exit_code;
 
-  GrainVMBlock *block;
+  VMBlock *block;
 
   bytecode_t *ip;
 
-} GrainVM;
+} VM;
 
-GrainVM *gvm_create();
+VM *vm_create();
 
-void gvm_push(GrainVM *gvm, Value value);
+void vm_push(VM *vm, Value value);
 
-Value gvm_pop(GrainVM *gvm);
+Value vm_pop(VM *vm);
 
-GrainVMResult gvm_run(GrainVM *gvm, GrainVMBlock *block);
+VMResult vm_run(VM *vm, VMBlock *block);
 
-void gvm_destroy(GrainVM *gvm);
+void vm_destroy(VM *vm);
 

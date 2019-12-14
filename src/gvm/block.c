@@ -6,8 +6,8 @@
 #include "gvm/memory.h"
 #include "gvm/value.h"
 
-GrainVMBlock *blk_create() {
-  GrainVMBlock *blk = calloc(1, sizeof(GrainVMBlock));
+VMBlock *blk_create() {
+  VMBlock *blk = calloc(1, sizeof(VMBlock));
   check_mem(blk);
 
   blk->code = NULL;
@@ -23,7 +23,7 @@ error:
   return NULL;
 }
 
-void blk_write_code(GrainVMBlock *blk, bytecode_t byte) {
+void blk_write_code(VMBlock *blk, bytecode_t byte) {
   if (blk->capacity < blk->count + 1) {
     int oldCapacity = blk->capacity;
     blk->capacity = GROW_CAPACITY(oldCapacity);
@@ -39,17 +39,17 @@ error:
   log_err("Could not resize block code memory");
 }
 
-uint32_t blk_write_constant(GrainVMBlock *blk, Value constant) {
+uint32_t blk_write_constant(VMBlock *blk, Value constant) {
   val_array_write(blk->constants, constant);
   return (blk->constants->count - 1);
 }
 
-void blk_destroy(GrainVMBlock *blk) {
-  check(blk != NULL, "Invalid Grain VM Block");
+void blk_destroy(VMBlock *blk) {
+  check(blk != NULL, "Invalid VM Block");
   FREE_ARRAY(bytecode_t, blk->code, blk->capacity);
   val_array_destroy(blk->constants);
   free(blk);
   return;
 error:
-  log_err("Could not clean up Grain VM Block");
+  log_err("Could not clean up VM Block");
 }

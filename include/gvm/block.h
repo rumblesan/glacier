@@ -15,12 +15,12 @@ typedef struct {
 
   ValueArray *constants;
 
-} GrainVMBlock;
+} VMBlock;
 
-GrainVMBlock *blk_create();
+VMBlock *blk_create();
 
-void blk_write_code(GrainVMBlock *blk, bytecode_t code_byte);
+void blk_write_code(VMBlock *blk, bytecode_t code_byte);
 
-uint32_t blk_write_constant(GrainVMBlock *blk, Value constant);
+uint32_t blk_write_constant(VMBlock *blk, Value constant);
 
-void blk_destroy(GrainVMBlock *blk);
+void blk_destroy(VMBlock *blk);
