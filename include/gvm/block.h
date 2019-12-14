@@ -4,12 +4,14 @@
 
 #include "gvm/value.h"
 
+#define bytecode_t uint8_t
+
 typedef struct {
 
   uint32_t count;
   uint32_t capacity;
 
-  uint8_t *code;
+  bytecode_t *code;
 
   ValueArray *constants;
 
@@ -17,7 +19,7 @@ typedef struct {
 
 GrainVMBlock *blk_create();
 
-void blk_write_code(GrainVMBlock *blk, uint8_t code_byte);
+void blk_write_code(GrainVMBlock *blk, bytecode_t code_byte);
 
 uint32_t blk_write_constant(GrainVMBlock *blk, Value constant);
 

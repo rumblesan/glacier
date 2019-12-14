@@ -16,7 +16,7 @@ typedef struct {
 
   Value stack[GRAINVM_STACK_SIZE];
 
-  uint32_t *ip;
+  bytecode_t *ip;
 
 } GrainVM;
 
