@@ -8,13 +8,21 @@
 #define GRAINVM_STACK_SIZE 256
 
 typedef enum {
-  OP_Constant,
-  OP_Exit,
+  OP_CONSTANT,
+  OP_EXIT,
 } GrainVMOps;
+
+typedef enum {
+  INTERPRET_OK,
+  INTERPRET_COMPILE_ERROR,
+  INTERPRET_RUNTIME_ERROR
+} GrainVMResult;
 
 typedef struct {
 
   Value stack[GRAINVM_STACK_SIZE];
+
+  GrainVMBlock *block;
 
   bytecode_t *ip;
 
@@ -22,7 +30,7 @@ typedef struct {
 
 GrainVM *gvm_create();
 
-void gvm_run(GrainVM *gvm, GrainVMBlock *blk);
+GrainVMResult gvm_run(GrainVM *gvm, GrainVMBlock *block);
 
 void gvm_destroy(GrainVM *gvm);
 
