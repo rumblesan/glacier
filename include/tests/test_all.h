@@ -7,4 +7,6 @@ void test_sync_control();
 void test_loop_track();
 void test_garbage_collector();
 void test_vm();
+void test_grain_state();
+void test_grain_vm();
 void test_glacier_app();
