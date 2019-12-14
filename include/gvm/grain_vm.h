@@ -17,6 +17,7 @@ typedef enum {
   OP_DIVIDE,
   OP_NEGATE,
   OP_CONSTANT,
+  OP_NOT,
   OP_EXIT,
 } GrainVMOps;
 

@@ -44,7 +44,11 @@ void runtime_error(GrainVM *gvm, const char *msg) {
 
 Value peek(GrainVM *vm, int distance) {   
   return vm->stack_top[-1 - distance];
-}   
+}
+
+bool is_falsey(Value value) {
+  return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
 
 GrainVMResult run(GrainVM *gvm) {
   GrainVM vm = *gvm;
@@ -86,6 +90,7 @@ GrainVMResult run(GrainVM *gvm) {
 
         push(gvm, NUMBER_VAL(-AS_NUMBER(pop(gvm))));
         break;
+      case OP_NOT: push(gvm, BOOL_VAL(is_falsey(pop(gvm)))); break;
       case OP_CONSTANT: {
         Value constant = READ_CONSTANT();
         push(gvm, constant);
