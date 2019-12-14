@@ -1,0 +1,19 @@
+
+def launcher = phasor(period: sync.length / 16)
+
+func playGrain {|ph|
+  grain(buffer(track(2)), sync.position, ph.length * 2)
+}
+
+sync.onZero({
+  launcher.reset()
+})
+
+launcher.run()
+
+launcher.onZero({|ph|
+  grain(buffer(track(0)), sync.position, ph.length)
+})
+
+launcher.onZero(playGrain)
+
