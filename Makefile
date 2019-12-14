@@ -2,7 +2,7 @@ CC                = clang
 CFLAGS            = -Wall -g
 SDLFLAGS          = `sdl2-config --cflags --libs`
 LDFLAGS           = -c
-VPATH             = src src/core src/tests
+VPATH             = src src/core src/tests src/gvm
 LIBS              = -lportaudio -lportmidi -lck -llo -lSDL2_ttf -lconfig
 
 TEST_C_FLAGS      = $(CFLAGS)
@@ -17,7 +17,7 @@ HEADER_DIRS       = include
 
 INCLUDES          = $(addprefix -I, $(HEADER_DIRS))
 
-CORE_SOURCES      = $(notdir $(wildcard src/core/*.c))
+CORE_SOURCES      = $(notdir $(wildcard src/core/*.c) $(wildcard src/gvm/*.c))
 TEST_SOURCES      = $(notdir $(wildcard src/tests/*.c)) $(CORE_SOURCES)
 MAIN_SOURCES      = main.c $(CORE_SOURCES)
 DIAGRAMS          = $(notdir $(wildcard diagrams/*.dot))
