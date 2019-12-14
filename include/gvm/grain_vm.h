@@ -9,6 +9,11 @@
 
 typedef enum {
   OP_CONSTANT,
+  OP_ADD,
+  OP_SUBTRACT,
+  OP_MULTIPLY,
+  OP_DIVIDE,
+  OP_NEGATE,
   OP_EXIT,
 } GrainVMOps;
 
@@ -21,6 +26,9 @@ typedef enum {
 typedef struct {
 
   Value stack[GRAINVM_STACK_SIZE];
+  Value* stack_top;
+
+  Value exit_code;
 
   GrainVMBlock *block;
 
@@ -29,6 +37,10 @@ typedef struct {
 } GrainVM;
 
 GrainVM *gvm_create();
+
+void gvm_push(GrainVM *gvm, Value value);
+
+Value gvm_pop(GrainVM *gvm);
 
 GrainVMResult gvm_run(GrainVM *gvm, GrainVMBlock *block);
 
