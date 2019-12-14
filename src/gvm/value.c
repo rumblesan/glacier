@@ -30,6 +30,7 @@ void val_array_write(ValueArray *va, Value value) {
 
   va->values[va->count] = value;
   va->count++;
+  return;
 error:
   log_err("Could not resize block code memory");
 }
