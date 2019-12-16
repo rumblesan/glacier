@@ -107,7 +107,17 @@ VMResult run(VM *vm) {
         push(vm, BOOL_VAL(values_equal(a, b)));
         break;
       }
-      case OP_GREATER:   BINARY_OP(BOOL_VAL, >); break;
+      case OP_GET_LOCAL: {
+        uint8_t slot = READ_BYTE();
+        push(vm, _vm.stack[slot]);
+        break;
+      }
+      case OP_SET_LOCAL: {
+        uint8_t slot = READ_BYTE();
+        _vm.stack[slot] = peek(vm, 0);
+        break;
+      }
+      case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
       case OP_LESSER:   BINARY_OP(BOOL_VAL, <); break;
       case OP_CONSTANT: {
         Value constant = READ_CONSTANT();
