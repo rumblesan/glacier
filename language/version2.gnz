@@ -1,0 +1,21 @@
+
+def launcher (phasor (div 16 (length sync)))
+
+def playgrain {|ph|
+  (start
+    (grain
+      track2
+      (position sync)
+      (* 2 (length ph))
+      )
+  )
+}
+
+(start launcher)
+
+// how should triggers work??
+(trigger launcher 0 {|ph|
+  (start grain track0 (position sync) (length ph))
+})
+
+(trigger launcher 10 playgrain)
